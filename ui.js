@@ -268,7 +268,7 @@ window.UI = (function () {
   function updateQuest() {
     const q = S.quest, b = $("quest-banner"); if (!q || !b || q.done) return;
     const left = q.dur - (Date.now() - q.t0);
-    b.innerHTML = `🎯 <b>${fmt(left)}</b> · ${q.name}에 가서 ${q.npc}을(를) 만나봐!`;
+    b.innerHTML = `🧑‍🦱 아빠 미션 · <b>${fmt(left)}</b> · ${q.name}에서 ${q.npc} 만나기`;
     b.classList.toggle("low", left <= 60000);
     if (left <= 0) questFail();
   }
@@ -299,7 +299,7 @@ window.UI = (function () {
   const INTRO = [
     { photo: "town_view.jpg", text: "오늘 우리 가족은 새 동네, 속초로 이사 왔어요." },
     { photo: "street.jpg", text: "낯선 길, 낯선 학교, 낯선 가게들… 조금 떨리죠?" },
-    { photo: "sea.jpg", text: "걱정 마요. 아빠와 함께 속초에서의 하루를 미리 살아봐요!" },
+    { photo: "sea.jpg", text: "걱정 마. 아빠가 첫 미션을 줄게 — 바다에 가서 바다갈매기랑 인사하고 오자! 10분이면 충분해." },
   ];
   function renderIntro() {
     const it = INTRO[introIdx];
@@ -371,5 +371,3 @@ window.UI = (function () {
     isCollected: (id) => !!S.collected[id],
     collectedCount: () => Object.keys(S.collected).length,
     speak, stopSpeak,
-  };
-})();

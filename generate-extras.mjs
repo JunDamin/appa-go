@@ -37,7 +37,7 @@ const INSTR = {
 const INTRO_LINES = [
   "오늘 우리 가족은 새 동네, 속초로 이사 왔어요.",
   "낯선 길, 낯선 학교, 낯선 가게들. 조금 떨리죠?",
-  "걱정 마요. 아빠와 함께 속초에서의 하루를 미리 살아봐요!",
+  "걱정 마. 아빠가 첫 미션을 줄게. 바다에 가서 바다갈매기랑 인사하고 오자! 십 분이면 충분해.",
 ];
 const INTRO_VOICE = "fable";
 const INTRO_INSTR = "따뜻하고 안심시키는 아빠/내레이터가 새 동네로 이사 온 어린아이에게 부드럽게 이야기하듯.";
@@ -83,10 +83,13 @@ async function main() {
   let ok = 0, fail = 0;
   const run = async (label, fn) => { process.stdout.write(`  • ${label} ... `); try { await fn(); console.log("✅"); ok++; } catch (e) { console.log("❌ " + e.message); fail++; } };
 
-  if (mode === "all" || mode === "voice") {
-    console.log("🎙️  음성 생성 (OpenAI TTS)");
+  if (mode === "all" || mode === "voice" || mode === "intro") {
+    console.log("🎙️  인트로 음성");
     for (let i = 0; i < INTRO_LINES.length; i++)
       await run(`intro_${i}`, async () => save(`assets/voice/intro_${i}.mp3`, await tts(INTRO_LINES[i], INTRO_VOICE, INTRO_INSTR, apiKey)));
+  }
+  if (mode === "all" || mode === "voice") {
+    console.log("🎙️  대사 음성");
     for (const p of PLACES) {
       const voice = VOICE[p.id] || "nova", instr = INSTR[p.id] || "어린아이에게 다정하게.";
       for (let i = 0; i < (p.dialogue || []).length; i++)
