@@ -91,17 +91,15 @@
 - 배치: 메인 흐름과 분리된 보너스 — 정착 서사를 해치지 않게.
 
 ## 4. 공통 스타일 앵커 (생성 일관성의 핵심)
-**핵심 사실:** 맵·사진·내부 등 기존 비주얼은 전부 `generate-assets.mjs`의 **OpenAI `gpt-image-1`** +
+**핵심 사실 + 모델 결정:** 맵·사진·내부 등 기존 비주얼은 `generate-assets.mjs`의 `gpt-image-1` +
 공유 상수 `STORYBOOK`("warm pastel storybook illustration, soft friendly colors, cozy, child-friendly, no text…")
-으로 만들어졌다. 캐릭터도 **같은 모델·같은 `STORYBOOK` 상수**를 재사용해야 맵과 화풍이 보장된다.
-(새 STYLE_PREFIX를 만들지 말고 기존 `STORYBOOK`을 그대로 접두로 쓴다.)
+으로 만들어졌다. **캐릭터는 더 성능 좋은 `gpt-image-2`로 생성**(사용자 지정). `STORYBOOK` 상수는 그대로 재사용한다.
+모델 교체는 `generate-assets.mjs`의 `model: "gpt-image-1"` → `"gpt-image-2"` 한 줄(또는 캐릭터 잡 전용 모델 변수).
 
+- **맵과 톤 정합**: 맵은 gpt-image-1로 만들어졌으므로, 캐릭터(gpt-image-2)는 **`sokcho_map.png`를 레퍼런스 이미지로 입력**해 팔레트·붓터치를 맞춘다(gpt-image-2의 향상된 이미지 입력/일관성 활용). `STORYBOOK` 접두 공유로 화풍 보장.
 - **동일 구도**: 토큰=정면 ¾뷰 전신, 포트레이트=가슴 위 정면, 배경 투명/단색.
-- **⚠️ seed 없음**: `gpt-image-1`은 seed 파라미터가 없어 9명 상호 일관성을 시드로 못 잠근다.
-  대신 ① 강한 `STORYBOOK` 접두 + ② **동일 프롬프트 골격**(외형 단서만 교체) + ③ **캐릭터 레퍼런스 시트**
-  (한 장에 9명을 함께 그린 뒤 잘라 토큰/포트레이트로 사용)로 일관성 확보. 약간의 편차는 감수.
-- **일관성 보강 카드(필요 시)**: 위 방법으로도 톤이 흔들리면, **레퍼런스-이미지를 받는 모델**
-  (예: OpenRouter 경유 Gemini image)에 `sokcho_map.png`를 레퍼런스로 물려 보강. (기본은 gpt-image-1.)
+- **상호 일관성(9명)**: gpt-image-2가 seed/레퍼런스 일관성을 지원하면 그걸로 9명을 고정. 미지원이거나 약하면 ① 강한 `STORYBOOK` 접두 + ② **동일 프롬프트 골격**(외형 단서만 교체) + ③ **캐릭터 레퍼런스 시트**(한 장에 9명 그린 뒤 잘라쓰기)로 보강.
+- **검수 후 결정**: 1차 배치 결과를 맵과 나란히 보고, 톤이 맞으면 캐릭터만 gpt-image-2 유지. 맵과 미세 불일치가 거슬리면 맵·사진도 gpt-image-2로 재생성하는 옵션 검토(맵은 이미 양호하므로 후순위).
 - 산출 규격: 토큰 PNG(예: 96×128, 투명), 포트레이트 PNG(예: 256×256). 정확 규격은 `game.js`/`ui.js` 슬롯과 협의.
 
 ## 5. 소유 경계 & 연동 계약 (확정: 새 모듈 + 계약)
@@ -131,7 +129,7 @@
 ### 5.3 에셋 생성 분담 (그림=gpt-image-1, 텍스트=OpenRouter)
 | 대상 | 도구 | 스크립트 | 소유 |
 |------|------|---------|------|
-| 포트레이트·토큰 **그림** | OpenAI **gpt-image-1** + 기존 `STORYBOOK` | `generate-assets.mjs`에 `CHARACTER_JOBS` 추가 | data-assets (내가 스펙 제공) |
+| 포트레이트·토큰 **그림** | OpenAI **gpt-image-2** + 기존 `STORYBOOK` + 맵 레퍼런스 | `generate-assets.mjs`에 `CHARACTER_JOBS` 추가 (model→gpt-image-2) | data-assets (내가 스펙 제공) |
 | 대사·인상 4단계 대사·실제 팩트·태초마을 **텍스트** | **OpenRouter** (`OPENROUTER_API_KEY`) | 신규 `generate-text.mjs`(아직 없음) | data-assets/내 협의 |
 | 일관성 보강(필요 시) | OpenRouter 레퍼런스-이미지 모델 + `sokcho_map.png` 레퍼런스 | 옵션 | — |
 

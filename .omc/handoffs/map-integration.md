@@ -71,3 +71,20 @@ README + 크레딧/결과 화면에 `지도 데이터 © OpenStreetMap contribut
 ```bash
 node build-map.mjs   # OSM 재수집 + geo.json/geo.js/worldmap.js 재생성. bbox/앵커는 build-map.mjs 상단 상수.
 ```
+
+## 추가 작업 (worker-1 완료 후 통합 패스에 같이 적용)
+
+### (가) 한글 라벨 선명화 — game.js Explore 씬 라벨
+원인: `pixelArt:true`(game.js 게임설정) + 작은 Galmuri 폰트(7~9px) + 카메라 ZOOM 2.2 → 한글 nearest 확대로 뭉개짐.
+수정: 월드 건물 라벨/NPC 라벨의 `this.add.text(...)` 에 `.setResolution(3)` 추가, `fontSize` 7px→10px, 9px→10~11px 상향.
+예) `this.add.text(cx, b.y*TS-14, label, {... fontSize:"10px" ...}).setOrigin(0.5,1).setResolution(3).setDepth(99999);`
+(전역 대안: 게임설정에 `resolution: window.devicePixelRatio` — 단 pixelArt 타일 느낌에 영향 줄 수 있어 텍스트 setResolution이 안전.)
+
+### (나) 이미지 생성 → OpenRouter 전환 (generate-assets.mjs)
+`.env`에 `OPENROUTER_API_KEY` 존재(검증 완료). OpenAI 직호출 대신 OpenRouter 사용:
+- 엔드포인트: `POST https://openrouter.ai/api/v1/images`
+- 헤더: `Authorization: Bearer ${OPENROUTER_API_KEY}`, `Content-Type: application/json`
+- 바디: `{ "model": "openai/gpt-5.4-image-2", "prompt": job.prompt }`  ← "gpt image 2"의 실제 ID. ("openai/gpt-image-2"는 없음)
+- 응답: `data[0].b64_json` (base64) — 기존 파싱과 동일
+- generate() 의 fetch URL/헤더/모델/body만 위로 교체하면 됨(파일 쓰기 로직 그대로). gpt-image-1 size/quality 파라미터는 OpenRouter images API에서 무시되거나 모델별 상이 → prompt 중심으로 단순화 권장.
+- 대안 모델: `openai/gpt-5-image`(표준), `openai/gpt-5-image-mini`(저가/저지연).

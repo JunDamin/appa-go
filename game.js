@@ -515,6 +515,7 @@
         physics: { default: "arcade", arcade: { debug: false } },
         scene: [Boot, Explore],
       });
+      window.__APPA_GAME = game; // debug/verify 핸들 (런타임 무해)
     } else {
       game.scene.getScene("Explore").scene.restart({ mapId: "world", spawn: null });
     }

@@ -127,18 +127,33 @@ window.UI = (function () {
     const order = { morning: 0, afterschool: 1, evening: 2, night: 3, weekend: 4 };
     const got = PLACES.filter((p) => S.collected[p.id]).sort((a, b) => (order[a.dayPhase] || 9) - (order[b.dayPhase] || 9));
 
-    const wrap = $("result-pieces"); wrap.innerHTML = "";
-    got.forEach((p, i) => { const s = document.createElement("span"); s.textContent = (p.card && p.card.title) ? p.piece.emoji : p.piece.emoji; s.title = p.card ? p.card.title : ""; s.style.animationDelay = i * 0.15 + "s"; wrap.appendChild(s); });
-
-    // "나의 속초 하루지도" 내러티브
-    const lines = got.map((p) => (p.card && p.card.line) ? p.card.line : null).filter(Boolean);
     const ov = $("result-overlay");
     const t = ov.querySelector(".result-title"); if (t) t.textContent = "나의 속초 하루지도";
-    const sub = ov.querySelector(".result-sub"); if (sub) sub.textContent = "속초에서의 하루를 미리 살아봤어요!";
-    const msg = ov.querySelector(".result-msg");
-    if (msg) msg.innerHTML = lines.join("<br/>") + "<br/><br/>속초가 조금 내 동네처럼 느껴졌나요?";
+    const sub = ov.querySelector(".result-sub"); if (sub) sub.textContent = `하루 카드 ${got.length}장을 모았어요!`;
 
-    open("result-overlay"); ding();
+    // 카드 타임라인: 하루 순서대로 하나씩 등장 (클라이맥스)
+    const wrap = $("result-pieces"); wrap.className = "result-day"; wrap.innerHTML = "";
+    got.forEach((p, i) => {
+      const row = document.createElement("div");
+      row.className = "day-card";
+      row.style.animationDelay = (0.3 + i * 0.5) + "s";
+      const title = p.card ? p.card.title : p.name;
+      const line = p.card ? p.card.line : "";
+      row.innerHTML = `<span class="dc-emoji">${p.piece.emoji}</span><div class="dc-txt"><b>${title}</b><span>${line}</span></div>`;
+      wrap.appendChild(row);
+    });
+
+    const msg = ov.querySelector(".result-msg");
+    if (msg) {
+      msg.innerHTML = "속초가 조금 <b>내 동네</b>처럼 느껴졌나요?<br/>다음엔 진짜로 함께 가봐요!";
+      msg.style.animationDelay = (0.5 + got.length * 0.5) + "s";
+      msg.classList.add("dc-fade");
+    }
+
+    open("result-overlay");
+    // 카드마다 반짝 효과음 → 마지막에 성공음
+    got.forEach((_, i) => setTimeout(() => { try { if (window.AUDIO) AUDIO.play("reward"); } catch (e) {} }, 300 + i * 500));
+    setTimeout(() => { try { if (window.AUDIO) AUDIO.play("success"); } catch (e) {} }, 400 + got.length * 500);
   }
 
   /* ---------- 작은 효과음 (실제 SFX 도착 전 폴백) ---------- */
@@ -170,8 +185,30 @@ window.UI = (function () {
     S.isOpen = false;
   }
 
+  /* ---------- 인트로 (이사 온 첫날 훅) ---------- */
+  let introShown = false, introIdx = 0;
+  const INTRO = [
+    "오늘 우리 가족은 새 동네, 속초로 이사 왔어요.",
+    "낯선 길, 낯선 학교, 낯선 가게들… 조금 떨리죠?",
+    "걱정 마요. 아빠와 함께 속초에서의 하루를 미리 살아봐요!",
+  ];
+  function renderIntro() {
+    $("intro-photo").style.backgroundImage = "url(assets/intro/town_view.jpg)";
+    $("intro-text").textContent = INTRO[introIdx];
+    $("btn-intro-next").textContent = introIdx >= INTRO.length - 1 ? "출발! ▶" : "다음 ▶";
+    speak(INTRO[introIdx], 0.95, 0.92);
+  }
+  function showIntro() { introIdx = 0; renderIntro(); $("intro-overlay").classList.add("active"); }
+  function introNext() {
+    if (introIdx < INTRO.length - 1) { introIdx++; renderIntro(); }
+    else { stopSpeak(); $("intro-overlay").classList.remove("active"); S.isOpen = false; introShown = true; $("btn-start").click(); }
+  }
+
   /* ---------- 버튼 바인딩 ---------- */
   function bind() {
+    // 시작 버튼 가로채기: 첫 클릭은 인트로, 이후 통과(game.js startGame)
+    $("btn-start").addEventListener("click", (e) => { if (!introShown) { e.stopImmediatePropagation(); showIntro(); } });
+    $("btn-intro-next").addEventListener("click", introNext);
     $("btn-next").addEventListener("click", nextDialogue);
     $("btn-speak").addEventListener("click", () => { const p = S.activePlace; speak(p.dialogue[S.dlgIdx], p.npc.pitch, p.npc.rate); });
     $("btn-photo-speak").addEventListener("click", () => { const p = S.activePlace; speak(`진짜 ${p.name}이에요! 사진 속에서 ${p.lookMission.join(", ")}를 찾아봐요.`, p.npc.pitch, p.npc.rate); });
@@ -186,6 +223,7 @@ window.UI = (function () {
     const active = (id) => $(id).classList.contains("active");
     window.addEventListener("keydown", (e) => {
       const k = e.key;
+      if (active("intro-overlay")) { if (k === "Enter" || k === " ") { e.preventDefault(); $("btn-intro-next").click(); } return; }
       if (active("result-overlay")) {
         if (k === "Enter" || k === " ") { e.preventDefault(); $("btn-replay").click(); }
         return;

@@ -321,6 +321,33 @@ html, body {
 
 .npc-avatar { image-rendering: pixelated; background: #fff8e6; }
 
+/* ---------- 하루지도 결과 카드 타임라인 (클라이맥스) ---------- */
+.result-day { display: flex; flex-direction: column; gap: 8px; margin: 16px 0; max-height: 44vh; overflow-y: auto; }
+.day-card {
+  display: flex; align-items: center; gap: 10px; text-align: left;
+  background: #fff; border: 2px solid var(--rpg-border); border-radius: 14px; padding: 8px 12px;
+  box-shadow: 0 3px 0 rgba(0,0,0,.08);
+  opacity: 0; transform: translateX(-18px); animation: dcIn .5s cubic-bezier(.2,1.2,.4,1) forwards;
+}
+.day-card .dc-emoji { font-size: 1.8rem; flex-shrink: 0; filter: drop-shadow(0 2px 0 rgba(0,0,0,.12)); }
+.day-card .dc-txt { display: flex; flex-direction: column; }
+.day-card .dc-txt b { color: var(--accent); font-size: .95rem; }
+.day-card .dc-txt span { color: #3a335c; font-size: .84rem; line-height: 1.4; }
+.dc-fade { opacity: 0; animation: dcFade .6s ease forwards; }
+@keyframes dcIn { to { opacity: 1; transform: translateX(0); } }
+@keyframes dcFade { to { opacity: 1; } }
+
+/* ---------- 인트로 (이사 온 첫날 훅) ---------- */
+.intro-overlay { background: radial-gradient(circle at 50% 35%, #16245a, #05070f 80%); justify-content: center; }
+.intro-scene { margin: auto; padding: 18px; width: calc(100% - 32px); max-width: 440px; text-align: center; }
+.intro-photo {
+  width: 100%; aspect-ratio: 4/3; border-radius: 18px; border: 3px solid var(--rpg-border);
+  background: #16245a center/cover no-repeat; box-shadow: 0 10px 30px rgba(0,0,0,.5);
+  animation: logoPop .5s cubic-bezier(.2,1.2,.4,1) both;
+}
+.intro-text { color: #eaf0ff; font-size: 1.15rem; line-height: 1.7; margin: 18px 0; min-height: 3.4em; }
+#btn-intro-next { width: 80%; }
+
 @media (min-height: 800px) {
   .npc-avatar { width: 150px; height: 150px; font-size: 5rem; }
   .dialogue-text { font-size: 1.25rem; }
