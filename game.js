@@ -74,7 +74,7 @@
     const ic = INTERIORS[place.id];
     if (ic) {
       const wl = WORLD_LOC[place.id] || WORLD_HOME;
-      const fromWorld = { x: wl.x, y: wl.y + 85 }; // 월드 복귀 위치(픽셀)
+      const fromWorld = { x: wl.x, y: wl.y + 180 }; // 복귀 위치: 진입존(반경~140) 밖으로 빼 즉시 재진입 방지
       const portals = [{ to: "world", spawn: fromWorld, back: true, label: "동네로" }];
       return { id: "p_" + place.id, name: place.name, interior: true, ic, npc: place, portals };
     }
@@ -99,7 +99,7 @@
 
     const spawn = { x: 9, y: 13 }, npcCell = { x: 9, y: 5 };
     const wl = WORLD_LOC[place.id] || WORLD_HOME;
-    const fromWorld = { x: wl.x, y: wl.y + 85 }; // 월드 복귀 위치(픽셀)
+    const fromWorld = { x: wl.x, y: wl.y + 180 }; // 복귀 위치: 진입존 밖으로 빼 즉시 재진입 방지
     const portals = [{ x: 9, y: rows - 1, to: "world", spawn: fromWorld, back: true, label: "동네로" }];
     return {
       id: "p_" + place.id, name: place.name, cols, rows, data, trees,
@@ -314,6 +314,8 @@
         return z;
       });
       this.portalArmed = !this.spawnOverride;
+      // 진입: 걸어서 자동(overlap) + 탭 둘 다. 복귀 스폰은 존 밖으로 빼서(placeDef fromWorld)
+      // 즉시 재진입(무한순환)을 막는다. portalArmed로 복귀 직후 400ms 잠금도 유지.
       this.portals.forEach((z) => this.physics.add.overlap(this.player, z, () => this.tryPortal(z.portal)));
 
       // 카메라
@@ -326,8 +328,8 @@
       this.cursors = this.input.keyboard.createCursorKeys();
       this.wasd = this.input.keyboard.addKeys({ w: "W", a: "A", s: "S", d: "D" });
       this.events.on("update", () => { if (this.player) this.player.setDepth(this.player.y); });
-      // 월드맵 생활: 나는 새 + 배회 강아지/고양이 (characters 세션)
-      if (window.CHARACTERS && CHARACTERS.spawnWorldLife) CHARACTERS.spawnWorldLife(this, { width: W, height: H });
+      // 월드맵 생활(나는 새 + 배회 동물): 사용자 요청으로 비활성화(떠다니는 요소 제거).
+      // if (window.CHARACTERS && CHARACTERS.spawnWorldLife) CHARACTERS.spawnWorldLife(this, { width: W, height: H });
       this.time.delayedCall(400, () => { this.portalArmed = true; });
     }
 
@@ -386,15 +388,16 @@
           { fontFamily: "Galmuri11, sans-serif", fontSize: "13px", color: "#fff", backgroundColor: "#1b2a4a", padding: { x: 4, y: 2 } }).setOrigin(0.5, 1).setResolution(3).setDepth(99999);
         this.npcXY = { x: nx, y: ny };
 
-        // --- 동네로 돌아가는 문 ---
+        // --- 동네로 돌아가는 문 (탭으로 나가기) ---
         const dx = FX(ic.door.x), dy = FY(ic.door.y);
-        this.add.text(dx, dy, "🚪", { fontSize: Math.round(Math.min(W, H) * 0.07) + "px" }).setOrigin(0.5).setDepth(3);
-        this.add.text(dx, dy - Math.round(H * 0.05), "동네로",
-          { fontFamily: "Galmuri11, sans-serif", fontSize: "12px", color: "#fff", backgroundColor: "rgba(27,42,74,.92)", padding: { x: 5, y: 2 } }).setOrigin(0.5, 1).setDepth(99999);
-        const dsz = Math.round(Math.min(W, H) * 0.12);
-        const dz = this.add.zone(dx, dy, dsz, dsz); this.physics.add.existing(dz, true);
-        dz.portal = def.portals[0];
+        const doorIcon = this.add.text(dx, dy, "🚪", { fontSize: Math.round(Math.min(W, H) * 0.08) + "px" }).setOrigin(0.5).setDepth(99998);
+        this.add.text(dx, dy - Math.round(H * 0.06), "동네로 ▶",
+          { fontFamily: "Galmuri11, sans-serif", fontSize: "13px", color: "#fff", backgroundColor: "rgba(27,42,74,.95)", padding: { x: 6, y: 3 } }).setOrigin(0.5, 1).setResolution(3).setDepth(99999);
+        const dsz = Math.round(Math.min(W, H) * 0.16);
+        const dz = this.add.zone(dx, dy, dsz, dsz); dz.portal = def.portals[0];
         this.portals = [dz];
+        // 탭 전용 나가기(걷기 오버랩 자동발동 제거 → 진입/퇴장 무한순환 방지).
+        doorIcon.setInteractive({ useHandCursor: true }); doorIcon.on("pointerdown", () => this.tapPortal(dz.portal));
 
         // --- 플레이어 (스폰 = 비율) ---
         const sp = FX(ic.spawn.x), spy = FY(ic.spawn.y);
@@ -403,8 +406,6 @@
         this.player.body.setSize(18, 14); this.player.body.setOffset(23, 42);
         // 바닥 영역으로 이동 clamp 용 경계(픽셀)
         this.floorBounds = { x1: FX(ic.floor.x), y1: FY(ic.floor.y), x2: FX(ic.floor.x + ic.floor.w), y2: FY(ic.floor.y + ic.floor.h) };
-
-        this.portals.forEach((z) => this.physics.add.overlap(this.player, z, () => this.tryPortal(z.portal)));
 
         // --- 카메라: 줌 1, 추적 없음(한 화면) ---
         cam.setBounds(0, 0, W, H);
