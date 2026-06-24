@@ -9,6 +9,7 @@
   "use strict";
   const PLACES = globalThis.PLACES || [];
   const byId = {}; PLACES.forEach((p) => (byId[p.id] = p));
+  const INTERIORS = globalThis.INTERIORS || {};
 
   const TS = 32;          // LPC 타일 크기
   const ZOOM = 2.2;       // 카메라 줌
@@ -37,17 +38,40 @@
   };
   const WORLD_HOME = WL(0.20, 0.22); // 좌상단 우리 집
 
+  // 충돌 박스(이동 불가): 건물·물. 비율(cx,cy,w,h)→픽셀. 지도를 보고 footprint 추정.
+  const SB = (cxf, cyf, wf, hf) => ({ x: Math.round((cxf - wf / 2) * WORLD_W), y: Math.round((cyf - hf / 2) * WORLD_H), w: Math.round(wf * WORLD_W), h: Math.round(hf * WORLD_H) });
+  const WORLD_SOLIDS = [
+    SB(0.20, 0.20, 0.13, 0.13),  // 우리 집
+    SB(0.43, 0.16, 0.18, 0.15),  // 학교(시계탑)
+    SB(0.69, 0.18, 0.13, 0.13),  // 도서관(우상단 집)
+    SB(0.10, 0.58, 0.13, 0.12),  // 좌측 창고
+    SB(0.25, 0.70, 0.15, 0.14),  // 시장 상가
+    SB(0.52, 0.71, 0.15, 0.14),  // 마트
+    SB(0.75, 0.78, 0.17, 0.12),  // 연못(청초호)
+    SB(0.965, 0.5, 0.07, 1.0),   // 동해 바다(우측 띠)
+  ];
+
   function worldDef() {
-    const portals = PLACES.filter((p) => WORLD_LOC[p.id]).map((p) => ({
-      px: WORLD_LOC[p.id].x, py: WORLD_LOC[p.id].y, to: "p_" + p.id, label: p.name, placeId: p.id,
-    }));
+    const portals = PLACES.filter((p) => WORLD_LOC[p.id]).map((p) => {
+      const big = (p.id === "lake" || p.id === "beach") ? 230 : 150;
+      return { px: WORLD_LOC[p.id].x, py: WORLD_LOC[p.id].y, to: "p_" + p.id, label: p.name, placeId: p.id, zone: big };
+    });
     return {
       id: "world", name: "속초 우리 동네", image: "worldmap", imgW: WORLD_W, imgH: WORLD_H,
-      spawn: { x: WORLD_HOME.x, y: WORLD_HOME.y + 70 }, home: WORLD_HOME, portals,
+      spawn: { x: WORLD_HOME.x, y: WORLD_HOME.y + 150 }, home: WORLD_HOME, portals, solids: WORLD_SOLIDS,
     };
   }
 
   function placeDef(place) {
+    // ===== 이미지-백드롭 내부 분기 =====
+    const ic = INTERIORS[place.id];
+    if (ic) {
+      const wl = WORLD_LOC[place.id] || WORLD_HOME;
+      const fromWorld = { x: wl.x, y: wl.y + 85 }; // 월드 복귀 위치(픽셀)
+      const portals = [{ to: "world", spawn: fromWorld, back: true, label: "동네로" }];
+      return { id: "p_" + place.id, name: place.name, interior: true, ic, npc: place, portals };
+    }
+
     const cols = 18, rows = 16, theme = place.theme;
     const paved = theme === "market" || theme === "mart";
     const data = [];
@@ -109,6 +133,7 @@
         this.load.spritesheet(k, `assets/external_v2/tiles/${k}.png`, { frameWidth: 32, frameHeight: 32 }));
       this.load.spritesheet("player", "assets/external_v2/characters/princess.png", { frameWidth: 64, frameHeight: 64 });
       this.load.image("worldmap", "assets/world/sokcho_map.png");
+      // 건물 내부 = 이미지 백드롭(데이터 INTERIORS) 온디맨드 로드. 타일 조립 폐기로 urban 시트 불필요.
     }
     create() {
       // LPC 지형 PNG의 중앙 채움 타일(인덱스4)을 모아 합성 tileset 생성
@@ -146,6 +171,9 @@
 
       // ===== 이미지 월드(생성 일러스트 지도) 분기 =====
       if (def.image) { this.createImageWorld(def); return; }
+
+      // ===== 이미지-백드롭 내부 분기 =====
+      if (def.interior) { this.createInterior(def); return; }
 
       this.speed = SPEED;
       // 타일맵
@@ -244,6 +272,15 @@
       this.physics.world.setBounds(0, 0, W, H);
       this.player.setCollideWorldBounds(true);
 
+      // 충돌(이동 불가): 건물·물
+      const solids = this.physics.add.staticGroup();
+      (def.solids || []).forEach((s) => {
+        const r = this.add.rectangle(s.x + s.w / 2, s.y + s.h / 2, s.w, s.h, 0x000000, 0).setDepth(1);
+        this.physics.add.existing(r, true);
+        solids.add(r);
+      });
+      this.physics.add.collider(this.player, solids);
+
       // 우리 집 라벨
       if (def.home) this.add.text(def.home.x, def.home.y - 38, "우리 집 🏠",
         { fontFamily: "Galmuri11, sans-serif", fontSize: "17px", color: "#fff", backgroundColor: "#7a55aa", padding: { x: 6, y: 3 } }).setOrigin(0.5, 1).setDepth(99999);
@@ -254,7 +291,8 @@
         this.add.text(pt.px, pt.py - 44, (done ? "✓ " : "") + pt.label + " " + byId[pt.placeId].emoji,
           { fontFamily: "Galmuri11, sans-serif", fontSize: "17px", color: "#fff", backgroundColor: done ? "#4ca77d" : "rgba(27,42,74,.92)", padding: { x: 6, y: 3 } })
           .setOrigin(0.5, 1).setDepth(99999);
-        const z = this.add.zone(pt.px, pt.py, 110, 110); this.physics.add.existing(z, true);
+        const zs = pt.zone || 130;
+        const z = this.add.zone(pt.px, pt.py, zs, zs); this.physics.add.existing(z, true);
         z.portal = { to: pt.to, label: pt.label, spawn: null, back: false }; return z;
       });
       this.portalArmed = !this.spawnOverride;
@@ -273,6 +311,94 @@
       this.time.delayedCall(400, () => { this.portalArmed = true; });
     }
 
+    createInterior(def) {
+      const ic = def.ic;
+      const cam = this.cameras.main;
+      // 내부는 한 화면: 뷰포트 = 카메라 표시 크기(RESIZE 스케일). 줌=1, 추적 없음.
+      const W = cam.width, H = cam.height;
+      this.viewW = W; this.viewH = H;
+      this.speed = Math.max(120, Math.round(Math.min(W, H) * 0.45)); // 화면 크기 비례 속도
+      this.labels = [];
+      this.portalArmed = false; // 진입 직후 잠금(스폰이 문 근처라 즉시 복귀 방지)
+
+      const FX = (f) => f * W, FY = (f) => f * H; // 비율→픽셀
+
+      const buildScene = () => {
+        // --- 배경: 이미지 있으면 채우기, 없으면 플레이스홀더 ---
+        const texKey = "interior-" + def.id;
+        if (this.textures.exists(texKey)) {
+          const img = this.add.image(W / 2, H / 2, texKey).setDepth(0);
+          const src = this.textures.get(texKey).getSourceImage();
+          const scale = Math.max(W / src.width, H / src.height); // cover
+          img.setScale(scale);
+        } else {
+          // 플레이스홀더: fallbackColor 배경 + 큰 이모지 + 장소명
+          const colNum = Phaser.Display.Color.HexStringToColor(ic.fallbackColor || "#5aa84f").color;
+          this.add.rectangle(W / 2, H / 2, W, H, colNum).setDepth(0);
+          // 바닥 영역 강조(밝은 사각)
+          const fr = ic.floor;
+          this.add.rectangle(FX(fr.x + fr.w / 2), FY(fr.y + fr.h / 2), FX(fr.w), FY(fr.h), 0xffffff, 0.18)
+            .setStrokeStyle(2, 0xffffff, 0.35).setDepth(1);
+          this.add.text(W / 2, FY(0.18), def.npc.emoji, { fontSize: Math.round(Math.min(W, H) * 0.18) + "px" })
+            .setOrigin(0.5).setDepth(2);
+          this.add.text(W / 2, FY(0.30), def.name,
+            { fontFamily: "Galmuri11, sans-serif", fontSize: Math.round(Math.min(W, H) * 0.05) + "px", color: "#fff", backgroundColor: "rgba(0,0,0,.30)", padding: { x: 8, y: 4 } })
+            .setOrigin(0.5).setDepth(2);
+        }
+
+        // --- NPC ---
+        const nx = FX(ic.npc.x), ny = FY(ic.npc.y);
+        const em = this.add.text(nx, ny, def.npc.npc.emoji, { fontSize: Math.round(Math.min(W, H) * 0.08) + "px" }).setOrigin(0.5).setDepth(ny + 100);
+        this.add.text(nx, ny - Math.round(H * 0.06), def.npc.npc.name,
+          { fontFamily: "Galmuri11, sans-serif", fontSize: "12px", color: "#fff", backgroundColor: "#1b2a4a", padding: { x: 4, y: 2 } }).setOrigin(0.5, 1).setDepth(99999);
+        this.tweens.add({ targets: em, y: ny - 4, duration: 700, yoyo: true, repeat: -1, ease: "Sine.inOut" });
+        this.npcXY = { x: nx, y: ny };
+
+        // --- 동네로 돌아가는 문 ---
+        const dx = FX(ic.door.x), dy = FY(ic.door.y);
+        this.add.text(dx, dy, "🚪", { fontSize: Math.round(Math.min(W, H) * 0.07) + "px" }).setOrigin(0.5).setDepth(3);
+        this.add.text(dx, dy - Math.round(H * 0.05), "동네로",
+          { fontFamily: "Galmuri11, sans-serif", fontSize: "12px", color: "#fff", backgroundColor: "rgba(27,42,74,.92)", padding: { x: 5, y: 2 } }).setOrigin(0.5, 1).setDepth(99999);
+        const dsz = Math.round(Math.min(W, H) * 0.12);
+        const dz = this.add.zone(dx, dy, dsz, dsz); this.physics.add.existing(dz, true);
+        dz.portal = def.portals[0];
+        this.portals = [dz];
+
+        // --- 플레이어 (스폰 = 비율) ---
+        const sp = FX(ic.spawn.x), spy = FY(ic.spawn.y);
+        this.player = this.physics.add.sprite(sp, spy, "player", 18).setDepth(5000);
+        this.player.setOrigin(0.5, 0.78);
+        this.player.body.setSize(18, 14); this.player.body.setOffset(23, 42);
+        // 바닥 영역으로 이동 clamp 용 경계(픽셀)
+        this.floorBounds = { x1: FX(ic.floor.x), y1: FY(ic.floor.y), x2: FX(ic.floor.x + ic.floor.w), y2: FY(ic.floor.y + ic.floor.h) };
+
+        this.portals.forEach((z) => this.physics.add.overlap(this.player, z, () => this.tryPortal(z.portal)));
+
+        // --- 카메라: 줌 1, 추적 없음(한 화면) ---
+        cam.setBounds(0, 0, W, H);
+        cam.setZoom(1);
+        cam.stopFollow();
+        cam.centerOn(W / 2, H / 2);
+        cam.roundPixels = true;
+        cam.fadeIn(280);
+
+        this.cursors = this.input.keyboard.createCursorKeys();
+        this.wasd = this.input.keyboard.addKeys({ w: "W", a: "A", s: "S", d: "D" });
+        this.events.on("update", () => { if (this.player) this.player.setDepth(this.player.y); });
+        this.time.delayedCall(500, () => { this.portalArmed = true; });
+      };
+
+      // 이미지 온디맨드 로드 + 실패 시 플레이스홀더 폴백
+      const texKey = "interior-" + def.id;
+      if (this.textures.exists(texKey)) { buildScene(); return; }
+      let settled = false;
+      const done = () => { if (settled) return; settled = true; buildScene(); };
+      this.load.once("complete", done);
+      this.load.once("loaderror", done); // 이미지 없으면 플레이스홀더로
+      this.load.image(texKey, ic.bg);
+      this.load.start();
+    }
+
     tryPortal(pt) {
       if (this.busy || !this.portalArmed || UI.isOpen) return;
       this.busy = true;
@@ -288,7 +414,7 @@
     }
 
     update() {
-      if (!this.player) return;
+      if (!this.player || !this.cursors) return; // 비동기 로드 중(내부맵) 가드
       const stop = UI.isOpen || this.busy;
       let vx = 0, vy = 0;
       if (!stop) {
@@ -303,6 +429,15 @@
       }
       const spd = this.speed || SPEED;
       this.player.setVelocity(vx * spd, vy * spd);
+
+      // 내부맵: 플레이어를 바닥 영역으로 clamp
+      if (this.floorBounds) {
+        const fb = this.floorBounds;
+        if (this.player.x < fb.x1) { this.player.x = fb.x1; if (vx < 0) this.player.body.velocity.x = 0; }
+        else if (this.player.x > fb.x2) { this.player.x = fb.x2; if (vx > 0) this.player.body.velocity.x = 0; }
+        if (this.player.y < fb.y1) { this.player.y = fb.y1; if (vy < 0) this.player.body.velocity.y = 0; }
+        else if (this.player.y > fb.y2) { this.player.y = fb.y2; if (vy > 0) this.player.body.velocity.y = 0; }
+      }
 
       const moving = Math.hypot(vx, vy) > 0.1;
       if (moving) {
