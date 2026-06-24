@@ -10,6 +10,9 @@
   const PLACES = globalThis.PLACES || [];
   const byId = {}; PLACES.forEach((p) => (byId[p.id] = p));
   const INTERIORS = globalThis.INTERIORS || {};
+  // 내부 NPC = 실제 캐릭터 스프라이트(투명 standee, assets/characters/<key>.png). 이모지 폴백.
+  // school/mart는 전용 에셋이 없어 가까운 인물 재사용(담임=librarian, 마트=dad). 추후 전용 생성 가능.
+  const NPC_SPRITE = { library: "librarian", playground: "friend", market: "market_lady", lake: "grandpa", beach: "seagull", school: "librarian", mart: "dad" };
 
   const TS = 32;          // LPC 타일 크기
   const ZOOM = 2.2;       // 카메라 줌
@@ -138,6 +141,8 @@
       this.load.spritesheet("player", "assets/external_v2/characters/princess.png", { frameWidth: 64, frameHeight: 64 });
       this.load.image("worldmap", "assets/world/sokcho_map.png");
       // 건물 내부 = 이미지 백드롭(데이터 INTERIORS) 온디맨드 로드. 타일 조립 폐기로 urban 시트 불필요.
+      // 내부 NPC 캐릭터 standee (장소별). 누락 시 createInterior가 이모지로 폴백.
+      Object.entries(NPC_SPRITE).forEach(([id, key]) => this.load.image("npc-" + id, "assets/characters/" + key + ".png"));
     }
     create() {
       // LPC 지형 PNG의 중앙 채움 타일(인덱스4)을 모아 합성 tileset 생성

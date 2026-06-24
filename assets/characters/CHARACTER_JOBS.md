@@ -5,9 +5,11 @@
 > 모델: **gpt-image-2** (기존 gpt-image-1보다 성능 우위, 사용자 지정).
 > 스타일: 기존 `STORYBOOK` 상수 재사용 + `assets/world/sokcho_map.png` 톤 정합.
 
-## 생성 규칙
-- `generate()`의 `model`을 캐릭터 잡에 한해 **`"gpt-image-2"`**로(잡별 `job.model` 우선 적용 권장).
+## 생성 규칙 (현재 파이프라인 기준 — 2026-06-24 확인)
+- **엔드포인트**: OpenRouter `https://openrouter.ai/api/v1/images`, body `{model, prompt}`, 응답 `data[0].b64_json`.
+- **모델**: 전역 `IMAGE_MODEL`(기본 `openai/gpt-5.4-image-2` = "gpt image2"). 현재 `generate()`는 **per-job `model`을 안 쓰고 전역값** 사용 → 아래 잡의 `model:` 필드는 무시돼도 무방(원하면 `body.model = job.model || IMAGE_MODEL`로 잡별 적용 가능).
 - 모든 프롬프트에 기존 `STORYBOOK` 접두를 붙인다(맵과 동일 화풍).
+- 실행: `node generate-assets.mjs characters` (CHARACTER_JOBS를 generate-assets.mjs에 추가 + mode 'characters' 분기).
 - **맵 톤 정합(권장)**: 가능하면 `sokcho_map.png`를 레퍼런스 이미지로 입력(images edits/reference 경로). 텍스트만 쓸 경우 STORYBOOK + "same warm pastel storybook style as a children's map" 단서로 보강.
 - **토큰**: 단일 인물, **정면 ¾뷰 전신**, 단색/투명 배경, 그림자 없음(런타임이 그림자 그림). 파일명 `<id>_token.png`.
 - **포트레이트**: **가슴 위 정면 얼굴**, 부드러운 배경. 파일명 `<id>_portrait.png`, 표정 변형 `<id>_<expr>.png`.
