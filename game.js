@@ -404,14 +404,17 @@
         // --- 동네로 돌아가는 문 (큰 탭 바 — 화면 상단 중앙, 조이스틱과 겹치지 않게) ---
         const portal0 = def.portals[0];
         // 상단 중앙에 크고 누르기 쉬운 "동네로" 버튼(스크롤 고정). 하단 조이스틱 회피.
-        const barY = Math.round(H * 0.06);
-        const bar = this.add.rectangle(W / 2, barY, Math.round(W * 0.5), Math.round(H * 0.07), 0x1b2a4a, 0.92)
-          .setStrokeStyle(3, 0xffffff, 0.9).setDepth(99998).setScrollFactor(0);
+        const barY = Math.round(H * 0.07);
+        const barW = Math.round(W * 0.82), barH = Math.round(H * 0.12);
+        const bar = this.add.rectangle(W / 2, barY, barW, barH, 0x1b2a4a, 0.94)
+          .setStrokeStyle(4, 0xffffff, 0.95).setDepth(99998).setScrollFactor(0);
         const barTxt = this.add.text(W / 2, barY, "🚪 동네로 나가기 ▶",
-          { fontFamily: "Galmuri11, sans-serif", fontSize: Math.round(Math.min(W, H) * 0.045) + "px", color: "#fff" })
+          { fontFamily: "Galmuri11, sans-serif", fontSize: Math.round(Math.min(W, H) * 0.055) + "px", color: "#fff" })
           .setOrigin(0.5).setDepth(99999).setScrollFactor(0).setResolution(3);
         const exit = () => this.tapPortal(portal0);
-        bar.setInteractive({ useHandCursor: true }); bar.on("pointerdown", exit);
+        // 큰 탭 영역: 사각형 전체가 히트영역. 텍스트도 별도로 클릭 가능.
+        bar.setInteractive(new Phaser.Geom.Rectangle(0, 0, barW, barH), Phaser.Geom.Rectangle.Contains);
+        bar.input.cursor = "pointer"; bar.on("pointerdown", exit);
         barTxt.setInteractive({ useHandCursor: true }); barTxt.on("pointerdown", exit);
         // 키보드로도 나가기(Esc / Backspace)
         this.input.keyboard.once("keydown-ESC", exit);
