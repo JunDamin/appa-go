@@ -23,6 +23,7 @@
 | `CHARACTERS.onImpressionChange(cb)` | ui | 인상 변동 콜백 |
 | `CHARACTERS.easterEgg(id)` | ui | 친해짐 단계에서 태초마을 1회 반환 |
 | `CHARACTERS.realFact(id)` | ui | 인물별 실제 속초 사실 1줄 |
+| `CHARACTERS.forPlace(placeId)` / `idForPlace(placeId)` | ui, game | places.js 장소 id → 그 장소 인물(또는 id). school/daycare/library/mart/market/playground/pharmacy 매핑 |
 | `CHARACTERS.allFriends()` / `resetImpressions()` | ui | 정착 완료 판정 / 초기화(UI.reset에서 호출) |
 
 ## 연동 작업 (각 소유 세션이 수행)

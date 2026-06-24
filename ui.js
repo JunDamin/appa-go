@@ -98,13 +98,62 @@ window.UI = (function () {
     };
     if (src) { const img = new Image(); img.onload = () => { frame.innerHTML = ""; frame.appendChild(img); }; img.onerror = ph; img.src = src; } else ph();
   }
+  /* ---------- 제한시간 찾기 퀘스트 ---------- */
+  let missionTimerId = null;
+  function stopMissionTimer() { if (missionTimerId) { clearInterval(missionTimerId); missionTimerId = null; } }
+  function ensureMissionUI() {
+    const block = $("mission-list").parentElement;
+    if (!$("mission-timer")) {
+      const t = document.createElement("div"); t.id = "mission-timer"; t.className = "mission-timer";
+      t.innerHTML = `<div class="mt-bar"><div id="mt-fill" class="mt-fill"></div></div><span id="mt-secs">30</span><small>초</small>`;
+      block.insertBefore(t, $("mission-list"));
+    }
+    if (!$("mission-result")) {
+      const r = document.createElement("div"); r.id = "mission-result"; r.className = "mission-result"; block.appendChild(r);
+    }
+  }
   function renderMission() {
+    const place = S.activePlace;
+    ensureMissionUI();
+    S.missionDone = false;
+    const r = $("mission-result"); r.textContent = ""; r.className = "mission-result";
+    const head = $("mission-list").parentElement.querySelector(".mission-head");
+    if (head) head.innerHTML = "🎯 30초 안에 사진 속에서 다 찾아볼까?";
     const ul = $("mission-list"); ul.innerHTML = "";
-    S.activePlace.lookMission.forEach((item) => {
+    const total = place.lookMission.length; let found = 0;
+    place.lookMission.forEach((item) => {
       const li = document.createElement("li"); li.innerHTML = `<span class="chk"></span><span>${item}</span>`;
-      li.addEventListener("click", () => { li.classList.toggle("checked"); li.querySelector(".chk").textContent = li.classList.contains("checked") ? "✓" : ""; });
+      li.addEventListener("click", () => {
+        if (S.missionDone || li.classList.contains("checked")) return;
+        li.classList.add("checked"); li.querySelector(".chk").textContent = "✓";
+        try { if (window.AUDIO) AUDIO.play("pop"); } catch (e) {}
+        if (++found >= total) missionSuccess();
+      });
       ul.appendChild(li);
     });
+    startMissionTimer(30);
+  }
+  function startMissionTimer(sec) {
+    stopMissionTimer();
+    const fill = $("mt-fill"), secs = $("mt-secs"), tEl = $("mission-timer");
+    if (fill) fill.style.width = "100%"; if (secs) secs.textContent = sec; if (tEl) tEl.classList.remove("low");
+    const t0 = Date.now();
+    missionTimerId = setInterval(() => {
+      const left = Math.max(0, sec - (Date.now() - t0) / 1000);
+      if (fill) fill.style.width = (left / sec * 100) + "%";
+      if (secs) secs.textContent = Math.ceil(left);
+      if (tEl) tEl.classList.toggle("low", left <= 8);
+      if (left <= 0) missionTimeout();
+    }, 100);
+  }
+  function missionSuccess() {
+    if (S.missionDone) return; S.missionDone = true; stopMissionTimer();
+    const r = $("mission-result"); if (r) { r.textContent = "🎉 다 찾았어요! 멋져요!"; r.className = "mission-result ok"; }
+    try { if (window.AUDIO) AUDIO.play("success"); } catch (e) {}
+  }
+  function missionTimeout() {
+    if (S.missionDone) return; S.missionDone = true; stopMissionTimer();
+    const r = $("mission-result"); if (r) { r.textContent = "괜찮아요! 천천히 또 찾아봐요 😊"; r.className = "mission-result soft"; }
   }
 
   function openQuest(place) {
@@ -231,7 +280,7 @@ window.UI = (function () {
     $("btn-next").addEventListener("click", nextDialogue);
     $("btn-speak").addEventListener("click", () => { const p = S.activePlace; playVoice(p.id + "_d" + S.dlgIdx, p.dialogue[S.dlgIdx], p.npc.pitch, p.npc.rate); });
     $("btn-photo-speak").addEventListener("click", () => { const p = S.activePlace; speak(`진짜 ${p.name}이에요! 사진 속에서 ${p.lookMission.join(", ")}를 찾아봐요.`, p.npc.pitch, p.npc.rate); });
-    $("btn-photo-back").addEventListener("click", () => { stopSpeak(); close("photo-overlay"); openQuest(S.activePlace); });
+    $("btn-photo-back").addEventListener("click", () => { stopAllVoice(); stopMissionTimer(); close("photo-overlay"); openQuest(S.activePlace); });
     $("btn-quest-done").addEventListener("click", finishPlace);
     $("btn-replay").addEventListener("click", () => { close("result-overlay"); reset(); if (typeof S.onReplay === "function") S.onReplay(); });
     bindKeys();

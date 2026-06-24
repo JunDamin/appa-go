@@ -41,7 +41,7 @@ globalThis.CHARACTERS_DATA = (function () {
       impression: null, // 플레이어 자신
     },
     {
-      id: "friend", name: "새 친구", role: "또래", emoji: "🧒",
+      id: "friend", name: "새 친구", role: "또래", emoji: "🧒", placeId: "playground",
       appearance: "a cheerful Korean kid the same age, colorful headband, friendly grin",
       expressions: ["smile", "laugh", "talk"],
       realFact: "청초호 호수공원 놀이터는 방과 후 친구 만나기 좋은 곳이야.",
@@ -56,7 +56,52 @@ globalThis.CHARACTERS_DATA = (function () {
       },
     },
     {
-      id: "librarian", name: "도서관 선생님", role: "방과후 안내", emoji: "🧑‍🏫",
+      id: "teacher", name: "담임 선생님", role: "학교 안내", emoji: "🧑‍🏫", placeId: "school",
+      appearance: "a warm friendly Korean elementary school teacher, neat cardigan, kind smile",
+      expressions: ["smile", "talk"],
+      realFact: "학교 운동장·교문·보건실 위치를 미리 알아두면 첫 등교가 훨씬 덜 떨려.",
+      impression: {
+        lines: [
+          "안녕! 네가 새로 올 친구구나. 만나서 반가워.",
+          "여기가 우리 교실이야. 네 자리도 곧 생길 거야.",
+          "오늘 학교 어땠어? 잘 적응하고 있어 기특하네.",
+          "이제 학교가 편해졌지? 선생님은 늘 네 편이야.",
+        ],
+        card: { title: "새 학교 카드", emoji: "🏫", line: "매일 갈 학교가 생겼어요." },
+      },
+    },
+    {
+      id: "daycare_teacher", name: "어린이집 선생님", role: "어린이집 안내", emoji: "👩‍🏫", placeId: "daycare",
+      appearance: "a cheerful Korean daycare teacher, apron, gentle warm face",
+      expressions: ["smile", "laugh"],
+      realFact: "어린이집엔 블록과 그림책이 많아. 좋아하는 장난감을 하나 정해두면 적응이 쉬워.",
+      impression: {
+        lines: [
+          "어서 와! 여기는 친구들과 놀고 낮잠도 자는 곳이야.",
+          "블록도 그림책도 많아. 뭐가 제일 궁금해?",
+          "오늘 친구랑 잘 놀았네. 내일 또 보자!",
+          "이제 여기가 익숙하지? 선생님이 늘 반겨줄게.",
+        ],
+        card: { title: "포근한 어린이집 카드", emoji: "🧸", line: "마음 편히 놀 곳이 생겼어요." },
+      },
+    },
+    {
+      id: "mart_keeper", name: "마트 아저씨", role: "가게·생활", emoji: "🧑‍💼", placeId: "mart",
+      appearance: "a friendly Korean neighborhood grocery shopkeeper, apron, welcoming smile",
+      expressions: ["smile", "talk"],
+      realFact: "동네 마트에서 우유·과일 코너를 알아두면 엄마 심부름도 척척이야.",
+      impression: {
+        lines: [
+          "어서 오세요! 우리 동네 마트에 온 걸 환영해.",
+          "엄마 심부름 왔구나? 우유랑 과일은 저쪽이야.",
+          "오늘도 왔네. 단골은 척척박사 다 됐네!",
+          "필요한 거 있으면 언제든 와. 우리 동네 가게야.",
+        ],
+        card: { title: "심부름 척척 카드", emoji: "🛒", line: "가족 장보기를 도울 수 있어요." },
+      },
+    },
+    {
+      id: "librarian", name: "도서관 선생님", role: "방과후 안내", emoji: "🧑‍🏫", placeId: "library",
       appearance: "a calm warm Korean librarian, glasses, holding a picture book, soft cardigan",
       expressions: ["smile", "talk"],
       realFact: "속초시립도서관 1층은 어린이도서관이야. 가족 대출증을 만들면 책을 빌릴 수 있어.",
@@ -71,7 +116,7 @@ globalThis.CHARACTERS_DATA = (function () {
       },
     },
     {
-      id: "market_aunt", name: "시장 아주머니", role: "생활", emoji: "🧑‍🍳",
+      id: "market_aunt", name: "시장 아주머니", role: "생활", emoji: "🧑‍🍳", placeId: "market",
       appearance: "a warm friendly Korean market vendor aunty, apron, rosy cheeks, welcoming",
       expressions: ["smile", "offer", "laugh"],
       realFact: "속초관광수산시장 닭강정 골목이 아주 유명해. 바삭바삭하단다.",
@@ -101,7 +146,7 @@ globalThis.CHARACTERS_DATA = (function () {
       },
     },
     {
-      id: "pharmacist", name: "약사님", role: "안심", emoji: "🧑‍⚕️",
+      id: "pharmacist", name: "약사님", role: "안심", emoji: "🧑‍⚕️", placeId: "pharmacy",
       appearance: "a gentle Korean pharmacist, white coat, soft reassuring smile",
       expressions: ["smile", "talk"],
       realFact: "동네 약국은 아플 때 도움받는 곳이야. 위치를 알아두면 안심돼.",

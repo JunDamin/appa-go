@@ -18,6 +18,8 @@ window.CHARACTERS = (function () {
   D.CAST.forEach((c) => (byId[c.id] = c));
   const ambById = {};
   (D.AMBIENT || []).forEach((a) => (ambById[a.id] = a));
+  const byPlace = {};
+  D.CAST.forEach((c) => { if (c.placeId) byPlace[c.placeId] = c; });
 
   const TOKEN_DIR = "assets/characters/";
   const LS_IMP = "appago.impression.v1";
@@ -187,6 +189,9 @@ window.CHARACTERS = (function () {
   /* ---------- 조회 헬퍼 ---------- */
   function get(id) { return byId[id] || ambById[id] || null; }
   function realFact(id) { const c = byId[id]; return c ? c.realFact : null; }
+  // 장소(places.js id) → 그 장소의 인물. ui.js가 장소 이벤트에서 대사/포트레이트/인상 연결에 사용.
+  function forPlace(placeId) { return byPlace[placeId] || null; }
+  function idForPlace(placeId) { const c = byPlace[placeId]; return c ? c.id : null; }
 
   return {
     // 에셋
@@ -196,6 +201,8 @@ window.CHARACTERS = (function () {
     // 인상
     impressionStage, impressionLine, impressionLabel, impressionIcon,
     advanceImpression, impressionCard, onImpressionChange, resetImpressions, allFriends,
+    // 장소 연결
+    forPlace, idForPlace,
     // 기타
     easterEgg, realFact, get,
     data: D,
