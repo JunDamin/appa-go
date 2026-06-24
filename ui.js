@@ -62,15 +62,21 @@ window.UI = (function () {
   /* ---------- 흐름 ---------- */
   function startExperience(place) {
     S.activePlace = place; S.dlgIdx = 0;
+    if (S.quest && !S.quest.done && place.id === S.quest.id) questComplete(); // 퀘스트 대상 NPC 만남
     $("d-place-emoji").textContent = place.emoji;
     $("d-place-name").textContent = place.name;
     $("d-speaker").textContent = place.npc.name;
     drawAvatar(place);
     showLine(); open("dialogue-overlay");
   }
+  let typerId = null;
+  function typeText(el, text) {
+    clearInterval(typerId); el.textContent = "";
+    let i = 0; typerId = setInterval(() => { el.textContent = text.slice(0, ++i); if (i >= text.length) clearInterval(typerId); }, 26);
+  }
   function showLine() {
     const p = S.activePlace, last = S.dlgIdx >= p.dialogue.length - 1;
-    $("d-text").textContent = p.dialogue[S.dlgIdx];
+    typeText($("d-text"), p.dialogue[S.dlgIdx]); // 타이핑 연출
     $("btn-next").textContent = last ? "📷 진짜 모습 보기" : "다음 ▶";
     playVoice(p.id + "_d" + S.dlgIdx, p.dialogue[S.dlgIdx], p.npc.pitch, p.npc.rate); // 자동 자연 음성
   }
@@ -242,9 +248,47 @@ window.UI = (function () {
     return `rgb(${R},${G},${B})`;
   }
 
-  function reset() { S.collected = {}; renderPiecesHud(); }
+  /* ---------- 메인 퀘스트: 제한시간 안에 OO 가서 만나기 ---------- */
+  let questId = null;
+  function questTarget() { return PLACES.find((p) => p.id === "beach") || PLACES[PLACES.length - 1]; }
+  function ensureQuestBanner() {
+    if ($("quest-banner")) return;
+    const b = document.createElement("div"); b.id = "quest-banner"; b.className = "quest-banner";
+    (document.getElementById("screen-map") || document.getElementById("app")).appendChild(b);
+  }
+  function fmt(ms) { const s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
+  function startQuest() {
+    stopQuest();
+    const t = questTarget();
+    S.quest = { id: t.id, name: t.name, npc: t.npc.name, t0: Date.now(), dur: 600000, done: false };
+    ensureQuestBanner();
+    const b = $("quest-banner"); b.className = "quest-banner show";
+    updateQuest(); questId = setInterval(updateQuest, 500);
+  }
+  function updateQuest() {
+    const q = S.quest, b = $("quest-banner"); if (!q || !b || q.done) return;
+    const left = q.dur - (Date.now() - q.t0);
+    b.innerHTML = `🎯 <b>${fmt(left)}</b> · ${q.name}에 가서 ${q.npc}을(를) 만나봐!`;
+    b.classList.toggle("low", left <= 60000);
+    if (left <= 0) questFail();
+  }
+  function questComplete() {
+    const q = S.quest; if (!q || q.done) return; q.done = true; stopQuest();
+    const b = $("quest-banner"); if (b) { b.innerHTML = `🎉 ${q.npc}을(를) 만났어요! 퀘스트 성공!`; b.className = "quest-banner show done"; }
+    try { if (window.AUDIO) AUDIO.play("success"); } catch (e) {}
+    setTimeout(() => { const b2 = $("quest-banner"); if (b2) b2.classList.remove("show"); }, 4500);
+  }
+  function questFail() {
+    const q = S.quest; if (!q || q.done) return; q.done = true; stopQuest();
+    const b = $("quest-banner"); if (b) { b.innerHTML = `⏰ 시간이 다 됐어요! 그래도 천천히 둘러봐요 😊`; b.className = "quest-banner show fail"; }
+    setTimeout(() => { const b2 = $("quest-banner"); if (b2) b2.classList.remove("show"); }, 4500);
+  }
+  function stopQuest() { if (questId) { clearInterval(questId); questId = null; } }
+
+  function reset() { S.collected = {}; renderPiecesHud(); startQuest(); }
   function closeAll() {
-    stopAllVoice();
+    stopAllVoice(); stopMissionTimer(); stopQuest();
+    const qb = $("quest-banner"); if (qb) qb.classList.remove("show");
     ["dialogue-overlay", "photo-overlay", "quest-overlay", "result-overlay"].forEach(close);
     S.isOpen = false;
   }
