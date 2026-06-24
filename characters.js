@@ -235,12 +235,18 @@ window.CHARACTERS = (function () {
   // 장소(places.js id) → 그 장소의 인물. ui.js가 장소 이벤트에서 대사/포트레이트/인상 연결에 사용.
   function forPlace(placeId) { return byPlace[placeId] || null; }
   function idForPlace(placeId) { const c = byPlace[placeId]; return c ? c.id : null; }
+  // 선택지 대화(속초 소개·생활 안내). ui.js가 q를 버튼으로 렌더, 고르면 a 표시.
+  function topics(id) { return (D.TOPICS && D.TOPICS[id]) || []; }
+  function topicsForPlace(placeId) { return topics(idForPlace(placeId)); }
+  function crowdFor(placeId) { return (D.CROWD && D.CROWD[placeId]) || null; }
 
   return {
     // 에셋
     preload, tokenKey, tokenPath, portrait, emojiOf,
     // 월드 토큰
-    makeNPC, spawnAmbient,
+    makeNPC, spawnAmbient, spawnCrowd,
+    // 선택지 대화
+    topics, topicsForPlace, crowdFor,
     // 인상
     impressionStage, impressionLine, impressionLabel, impressionIcon,
     advanceImpression, impressionCard, onImpressionChange, resetImpressions, allFriends,
