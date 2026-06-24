@@ -21,11 +21,10 @@ git branch --show-current
 
 | 브랜치 | 당신의 담당(수정 가능) | 그 외 파일 |
 |---|---|---|
-| `session/game` | `game.js` | 읽기 전용 |
-| `session/ui` | `ui.js` | 읽기 전용 |
-| `session/audio` | `audio.js` | 읽기 전용 |
-| `session/data-assets` | `data/`, `assets/`, `generate-*.mjs` | 읽기 전용 |
-| `main` | 공유 파일·머지(통합 세션) | — |
+| `session/system` | `game.js`, `ui.js`, `audio.js`, `data/interiors.js`, `data/interiors/` | 읽기 전용 |
+| `session/map` | `data/places.js`, `data/worldgen.js`, `data/worldmap.js`, `data/geo.json`, `data/urban-tiles.js`, `build-map.mjs` | 읽기 전용 |
+| `session/character` | `generate-assets.mjs`, `assets/` | 읽기 전용 |
+| `main` | 공유 파일(`index.html`/`style.css`)·머지·테스트(통합 세션) | — |
 
 판별 후 사용자에게 "저는 `<브랜치>` = `<담당>` 세션입니다"라고 한 줄 알리고 시작한다.
 
@@ -35,11 +34,13 @@ git branch --show-current
 
 | 세션(브랜치) | 소유(수정 가능) | 읽기 전용(수정 금지) |
 |---|---|---|
-| `session/game` | `game.js` | `ui.js`, `audio.js`, `data/` |
-| `session/ui` | `ui.js` | `audio.js`, `data/` |
-| `session/audio` | `audio.js` | — |
-| `session/data-assets` | `data/`, `assets/`, `generate-*.mjs` | — |
-| 통합(integrator) | 공유 파일(§3), 머지 | — |
+| `session/system` | `game.js`, `ui.js`, `audio.js`, `data/interiors.js`, `data/interiors/` | `data/places.js`, `data/worldgen.js`, `assets/` |
+| `session/map` | `data/places.js`, `data/worldgen.js`, `data/worldmap.js`, `data/geo.json`, `data/urban-tiles.js`, `build-map.mjs` | `game.js`, `assets/` |
+| `session/character` | `generate-assets.mjs`, `assets/` | `game.js`, `data/` |
+| 통합(integrator) | 공유 파일(§3: `index.html`/`style.css`), 머지, 테스트 | — |
+
+> **핫스팟 `game.js`**: 시스템 세션 단독 소유. 맵은 `globalThis.GEO`/`globalThis.buildWorldFromGeo`로, 캐릭터는 에셋 파일·NPC 데이터로 **간접 기여**한다. game.js를 직접 편집하지 말 것.
+> **`index.html`**: 통합 세션이 소유. script 태그 추가가 필요하면 통합 세션에 요청(§3 락).
 
 ## 2. `window.*` 계약 (모듈 간 인터페이스)
 

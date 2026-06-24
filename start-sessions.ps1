@@ -7,10 +7,9 @@ $base = "C:\Users\user\Documents"
 
 # 디렉토리 -> 담당 모듈 (CLAUDE.md §1 과 일치)
 $sessions = [ordered]@{
-  "appa_go-game"  = "game.js"
-  "appa_go-ui"    = "ui.js"
-  "appa_go-audio" = "audio.js"
-  "appa_go-data"  = "data/ + assets/ + generate-*.mjs"
+  "appa_go-system"    = "game.js, ui.js, audio.js, data/interiors*"
+  "appa_go-map"       = "data/places.js, worldgen.js, geo.json, build-map.mjs"
+  "appa_go-character" = "generate-assets.mjs, assets/"
 }
 
 foreach ($dir in $sessions.Keys) {
