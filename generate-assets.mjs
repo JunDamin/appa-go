@@ -81,24 +81,44 @@ const INTERIOR_JOBS = [
     prompt: `High-angle top-down view of a lively Korean traditional market alley, like a 2D RPG street map seen from above. ` +
       `Food stalls with hanging signboards along both sides, a famous crispy fried-chicken (dakgangjeong) stand, a covered roof edge, ` +
       `a checkout/pay spot, a wide open walkable lane down the center, an entrance at the bottom. ${STORYBOOK}` },
+  { id: "lake", file: "assets/interiors/lake.png", size: INTERIOR_SIZE, quality: "high",
+    prompt: `High-angle top-down view of a calm lakeside park walking path (Cheongchoho lagoon in Sokcho), like a 2D RPG outdoor map seen from above. ` +
+      `A wooden deck path winding beside blue lake water at the top, benches and a few ducks, trees and grass along the sides, ` +
+      `a wide open walkable path down the center, an entry at the bottom. ${STORYBOOK}` },
+  { id: "beach", file: "assets/interiors/beach.png", size: INTERIOR_SIZE, quality: "high",
+    prompt: `High-angle top-down view of a sandy seaside beach (East Sea, Sokcho), like a 2D RPG outdoor map seen from above. ` +
+      `Blue sea with gentle waves at the top, a sandy beach with a walking path, a few seagulls, pine trees along one side, ` +
+      `a wide open walkable sand area in the center, an entry path at the bottom. ${STORYBOOK}` },
 ];
 
+// 이미지 생성 = OpenRouter 경유 OpenAI GPT Image (openai/gpt-5.4-image-2).
+// 엔드포인트 POST /api/v1/images, body {model,prompt}, 응답 data[0].b64_json.
+const IMAGE_MODEL = process.env.IMAGE_MODEL || "openai/gpt-5.4-image-2";
 async function generate(job, apiKey) {
-  const body = { model: "gpt-image-1", prompt: job.prompt, size: job.size || "1024x1024", n: 1, quality: job.quality || "medium" };
-  const res = await fetch("https://api.openai.com/v1/images/generations", {
-    method: "POST", headers: { "Content-Type": "application/json", Authorization: `Bearer ${apiKey}` }, body: JSON.stringify(body),
+  const body = { model: IMAGE_MODEL, prompt: job.prompt };
+  if (job.size) body.size = job.size; // 일부 모델만 반영, 무시돼도 무해(렌더가 cover 스케일)
+  const res = await fetch("https://openrouter.ai/api/v1/images", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${apiKey}`,
+      "HTTP-Referer": "https://appa-go.local",
+      "X-Title": "appa-go",
+    },
+    body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`HTTP ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  if (!res.ok) throw new Error(`OpenRouter HTTP ${res.status}: ${(await res.text()).slice(0, 400)}`);
   const data = await res.json();
   const b64 = data?.data?.[0]?.b64_json;
-  if (!b64) throw new Error("응답에 b64_json 없음");
+  if (!b64) throw new Error("응답에 b64_json 없음: " + JSON.stringify(data).slice(0, 300));
   return Buffer.from(b64, "base64");
 }
 
 async function main() {
   await loadEnv();
-  const apiKey = process.env.OPENAI_API_KEY;
-  if (!apiKey) { console.error("❌ OPENAI_API_KEY 없음 (.env)"); process.exit(1); }
+  const apiKey = process.env.OPENROUTER_API_KEY;
+  if (!apiKey) { console.error("❌ OPENROUTER_API_KEY 없음 (.env)"); process.exit(1); }
+  console.log(`🔑 OpenRouter / model: ${IMAGE_MODEL}`);
   const mode = (process.argv[2] || "all").toLowerCase();
   const idFilter = (process.argv[3] || "").toLowerCase(); // interiors 모드 선택적 id 필터
   let jobs;

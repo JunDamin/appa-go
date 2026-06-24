@@ -68,4 +68,20 @@ globalThis.INTERIORS = {
     door:  { x: 0.50, y: 0.92 },
     spawn: { x: 0.50, y: 0.85 },
   },
+  lake: {
+    bg: "assets/interiors/lake.png",
+    fallbackColor: "#3aa0c0",
+    floor: { x: 0.08, y: 0.34, w: 0.84, h: 0.56 },
+    npc:   { x: 0.50, y: 0.44 },
+    door:  { x: 0.50, y: 0.92 },
+    spawn: { x: 0.50, y: 0.85 },
+  },
+  beach: {
+    bg: "assets/interiors/beach.png",
+    fallbackColor: "#3a9bd0",
+    floor: { x: 0.08, y: 0.38, w: 0.84, h: 0.52 },
+    npc:   { x: 0.50, y: 0.48 },
+    door:  { x: 0.50, y: 0.92 },
+    spawn: { x: 0.50, y: 0.85 },
+  },
 };
