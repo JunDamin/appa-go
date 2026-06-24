@@ -63,6 +63,15 @@ const CHARACTER_JOBS = [
 인상 시스템이 표정 교체를 쓰므로(`portrait(id, expr)`), 핵심 인물의 표정 변형을 추가 생성:
 `dad_smile/talk/worry`, `kid_happy/surprised`, `market_aunt_offer`, `gull_happy` 등 — `data/characters.js`의 각 인물 `expressions` 목록과 일치시킨다.
 
+## 배경 제거 (필수 후처리) — 검증됨 ✅
+gpt-image-2는 이 엔드포인트에서 **단색 파스텔 배경**으로 나온다(투명 X). 토큰은 맵 위에 올리므로
+**배경을 투명**으로 빼야 한다. 방법: **모서리에서 플러드필**(테두리 시작 → 배경색과 tol 이내 픽셀만
+alpha=0, 캐릭터 안쪽은 보존). tol≈60에서 친구 81% / 강아지 75% 투명, 헤일로 없이 깨끗.
+- 구현: PowerShell System.Drawing LockBits 플러드필(무의존) 또는 Node sharp/pngjs.
+- 포트레이트는 배경 유지 가능(대화창 안에 들어가므로). **토큰만** 배경 제거 필수.
+- 검증: 투명 토큰을 `sokcho_map.png` 크롭 위에 합성 → 자연스러우면 OK(2장 프루프로 확인 완료).
+
 ## 검수
 생성 후 9명 토큰+포트레이트를 `sokcho_map.png`와 나란히 컨택트시트로 합쳐 육안 검수.
-톤(팔레트·외곽선·붓터치)이 맵과 어긋난 인물만 프롬프트/seed 조정해 재생성.
+톤(팔레트·외곽선·붓터치)이 맵과 어긋난 인물만 프롬프트 조정해 재생성.
+**프루프 결과(2026-06-24): friend_token / amb_dog_token 생성+배경제거 → 맵 합성 자연스러움 확인.**
