@@ -43,6 +43,27 @@
 3. **session/ui (`ui.js`)** — `drawAvatar()`를 `CHARACTERS.portrait(id,expr)` 이미지로(없으면 이모지). 대화 흐름에 인상 단계 적용: 대사=`impressionLine`, 종료 시 `advanceImpression`, 머리 위 `impressionIcon`, 친해짐 시 `impressionCard`/`easterEgg`. `realFact`를 사진 카드와 함께.
 4. **session/data-assets (`generate-assets.mjs`)** — `assets/characters/CHARACTER_JOBS.md`의 배열을 추가, `generate()`가 `job.model`(="gpt-image-2") 적용하도록, `node generate-assets.mjs characters` 실행. 맵(`sokcho_map.png`)을 톤 레퍼런스로.
 
+## ⚡ game.js 즉시 적용 스니펫 (소비측 연결 — game 세션이 붙여넣기)
+캐릭터 토큰 20종은 `assets/characters/<id>_token.png`로 **생성·배경제거·커밋 완료**. 아래 3곳만 고치면 화면에 나타남:
+
+1) **장소 NPC를 새 동화풍 토큰으로** (game.js:15 NPC_SPRITE 교체 + :145 로드 경로 `_token.png`):
+```js
+const NPC_SPRITE = { library:"librarian", playground:"friend", market:"market_aunt", lake:"grandpa", beach:"gull", school:"teacher", mart:"mart_keeper", daycare:"daycare_teacher" };
+// Boot.preload:
+Object.entries(NPC_SPRITE).forEach(([id,key]) => this.load.image("npc-"+id, "assets/characters/"+key+"_token.png"));
+if (window.CHARACTERS) CHARACTERS.preload(this);   // 캐릭터 토큰 일괄 로드(누락은 무시)
+```
+2) **월드맵에 새·동물** (createImageWorld 끝부분, W/H 이미 정의됨):
+```js
+if (window.CHARACTERS) CHARACTERS.spawnWorldLife(this, { width: W, height: H });
+```
+3) (선택) **장소 도착 환영·군중**: createImageWorld portal 진입 또는 장소 씬에서
+```js
+const crowd = CHARACTERS.spawnCrowd(this, { placeId, center:{x,y} });
+CHARACTERS.welcomeCrowd(this, crowd, placeId);
+```
+> 토큰 파일이 있으면 자동 사용, 없으면 이모지 폴백 — 안전. (모두 존재함)
+
 ## 통합 세션에 요청
 - CLAUDE.md §1 소유표에 행 추가: `session/characters | characters.js, data/characters.js, assets/characters/`.
 - CLAUDE.md §2 계약표에 `window.CHARACTERS` 등재(제공: characters.js / 소비: game.js, ui.js).
