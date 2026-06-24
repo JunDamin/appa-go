@@ -284,5 +284,17 @@ globalThis.CHARACTERS_DATA = (function () {
     pharmacy: { lead: "pharmacist", extras: [] },
   };
 
-  return { STAGES, CAST, AMBIENT, EASTER_EGGS, TOPICS, CROWD };
+  // 환영(WELCOME): 그 장소에 도착하면 사람들이 반겨주는 인사. 군중 각자가 하나씩 띄움.
+  const WELCOME = {
+    school: ["안녕! 새로 왔구나!", "우리 반이야? 환영해!", "같이 놀자!"],
+    playground: ["어! 새 친구다!", "이리 와, 같이 놀자!", "안녕!"],
+    daycare: ["어서 와!", "여기 재밌어!", "같이 블록 쌓자!"],
+    library: ["쉿, 어서 와 :)", "여기 책 많아!"],
+    market: ["어서 와요~", "구경하고 가요!", "맛있는 거 많아!"],
+    mart: ["어서 오세요!", "뭐 찾아요?"],
+    lake: ["어, 산책 왔구나.", "같이 걸을까?"],
+    pharmacy: ["어서 와, 괜찮아."],
+  };
+
+  return { STAGES, CAST, AMBIENT, EASTER_EGGS, TOPICS, CROWD, WELCOME };
 })();

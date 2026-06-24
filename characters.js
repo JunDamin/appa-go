@@ -181,6 +181,30 @@ window.CHARACTERS = (function () {
     hop();
   }
 
+  /* ---------- 계약: 도착 환영 ----------
+     spawnCrowd 결과(crowd[])를 받아, 사람들이 인사 말풍선 + 통통 튀며 반겨준다.
+     game.js가 장소 도착(또는 군중 스폰 직후) 시 호출:
+       const crowd = CHARACTERS.spawnCrowd(scene,{placeId,center});
+       CHARACTERS.welcomeCrowd(scene, crowd, placeId); */
+  function welcomeLines(placeId) { return (D.WELCOME && D.WELCOME[placeId]) || []; }
+  function welcomeCrowd(scene, crowd, placeId) {
+    if (!crowd || !crowd.length) return;
+    const lines = welcomeLines(placeId);
+    crowd.forEach((m, i) => {
+      scene.time.delayedCall(i * 240, () => {
+        if (!m.tok || !m.tok.node || !m.tok.node.scene) return;
+        bouncePop(scene, m.tok);
+        showFlavor(scene, m.tok, lines.length ? lines[i % lines.length] : "환영해!");
+      });
+    });
+  }
+  // 환영 점프(스케일 펄스 — bob의 y트윈과 충돌하지 않고 flip 부호 보존)
+  function bouncePop(scene, tok) {
+    if (!tok || !tok.node) return;
+    const sx = tok.node.scaleX, sy = tok.node.scaleY;
+    scene.tweens.add({ targets: tok.node, scaleX: sx * 1.15, scaleY: sy * 1.15, duration: 150, yoyo: true, repeat: 1, ease: "Quad.out" });
+  }
+
   /* ---------- 계약: 포트레이트 (ui.js DOM) ----------
      { src, emoji } 반환. ui.js 는 <img src> 로 시도하고 onerror 시 emoji 폴백. */
   function portrait(id, expr) {
@@ -244,7 +268,7 @@ window.CHARACTERS = (function () {
     // 에셋
     preload, tokenKey, tokenPath, portrait, emojiOf,
     // 월드 토큰
-    makeNPC, spawnAmbient, spawnCrowd,
+    makeNPC, spawnAmbient, spawnCrowd, welcomeCrowd, welcomeLines,
     // 선택지 대화
     topics, topicsForPlace, crowdFor,
     // 인상
