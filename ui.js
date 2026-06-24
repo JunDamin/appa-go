@@ -32,6 +32,20 @@ window.UI = (function () {
   }
   function stopSpeak() { if (window.speechSynthesis) speechSynthesis.cancel(); }
 
+  // 자연 음성(OpenAI TTS 사전생성 mp3) 우선, 없으면 Web Speech 폴백.
+  let voiceEl = null;
+  function playVoice(key, text, pitch, rate) {
+    stopSpeak();
+    try { if (voiceEl) { voiceEl.pause(); voiceEl.currentTime = 0; } } catch (e) {}
+    let done = false;
+    const fb = () => { if (done) return; done = true; speak(text, pitch == null ? 1 : pitch, rate == null ? 1 : rate); };
+    voiceEl = new Audio("assets/voice/" + key + ".mp3");
+    voiceEl.volume = 1.0;
+    voiceEl.onerror = fb;
+    voiceEl.play().then(() => { done = true; }).catch(fb);
+  }
+  function stopAllVoice() { stopSpeak(); try { if (voiceEl) voiceEl.pause(); } catch (e) {} }
+
   /* ---------- 오버레이 ---------- */
   function open(id) { S.isOpen = true; $(id).classList.add("active"); }
   function close(id) { $(id).classList.remove("active"); $(id).querySelectorAll(".photo-dots").forEach((d) => d.remove()); }
@@ -58,11 +72,12 @@ window.UI = (function () {
     const p = S.activePlace, last = S.dlgIdx >= p.dialogue.length - 1;
     $("d-text").textContent = p.dialogue[S.dlgIdx];
     $("btn-next").textContent = last ? "📷 진짜 모습 보기" : "다음 ▶";
+    playVoice(p.id + "_d" + S.dlgIdx, p.dialogue[S.dlgIdx], p.npc.pitch, p.npc.rate); // 자동 자연 음성
   }
   function nextDialogue() {
     const p = S.activePlace;
     if (S.dlgIdx < p.dialogue.length - 1) { S.dlgIdx++; showLine(); }
-    else { stopSpeak(); close("dialogue-overlay"); openPhoto(p); }
+    else { stopAllVoice(); close("dialogue-overlay"); openPhoto(p); }
   }
 
   function openPhoto(place) {
@@ -180,28 +195,32 @@ window.UI = (function () {
 
   function reset() { S.collected = {}; renderPiecesHud(); }
   function closeAll() {
-    stopSpeak();
+    stopAllVoice();
     ["dialogue-overlay", "photo-overlay", "quest-overlay", "result-overlay"].forEach(close);
     S.isOpen = false;
   }
 
   /* ---------- 인트로 (이사 온 첫날 훅) ---------- */
   let introShown = false, introIdx = 0;
+  // 실제 속초 사진(친근감) + 사전생성 자연 음성
   const INTRO = [
-    "오늘 우리 가족은 새 동네, 속초로 이사 왔어요.",
-    "낯선 길, 낯선 학교, 낯선 가게들… 조금 떨리죠?",
-    "걱정 마요. 아빠와 함께 속초에서의 하루를 미리 살아봐요!",
+    { photo: "town_view.jpg", text: "오늘 우리 가족은 새 동네, 속초로 이사 왔어요." },
+    { photo: "street.jpg", text: "낯선 길, 낯선 학교, 낯선 가게들… 조금 떨리죠?" },
+    { photo: "sea.jpg", text: "걱정 마요. 아빠와 함께 속초에서의 하루를 미리 살아봐요!" },
   ];
   function renderIntro() {
-    $("intro-photo").style.backgroundImage = "url(assets/intro/town_view.jpg)";
-    $("intro-text").textContent = INTRO[introIdx];
+    const it = INTRO[introIdx];
+    const ph = $("intro-photo");
+    ph.style.backgroundImage = `url(assets/intro/${it.photo})`;
+    ph.style.animation = "none"; void ph.offsetWidth; ph.style.animation = ""; // 전환 애니 재생
+    $("intro-text").textContent = it.text;
     $("btn-intro-next").textContent = introIdx >= INTRO.length - 1 ? "출발! ▶" : "다음 ▶";
-    speak(INTRO[introIdx], 0.95, 0.92);
+    playVoice("intro_" + introIdx, it.text, 0.95, 0.92);
   }
   function showIntro() { introIdx = 0; renderIntro(); $("intro-overlay").classList.add("active"); }
   function introNext() {
     if (introIdx < INTRO.length - 1) { introIdx++; renderIntro(); }
-    else { stopSpeak(); $("intro-overlay").classList.remove("active"); S.isOpen = false; introShown = true; $("btn-start").click(); }
+    else { stopAllVoice(); $("intro-overlay").classList.remove("active"); S.isOpen = false; introShown = true; $("btn-start").click(); }
   }
 
   /* ---------- 버튼 바인딩 ---------- */
@@ -210,7 +229,7 @@ window.UI = (function () {
     $("btn-start").addEventListener("click", (e) => { if (!introShown) { e.stopImmediatePropagation(); showIntro(); } });
     $("btn-intro-next").addEventListener("click", introNext);
     $("btn-next").addEventListener("click", nextDialogue);
-    $("btn-speak").addEventListener("click", () => { const p = S.activePlace; speak(p.dialogue[S.dlgIdx], p.npc.pitch, p.npc.rate); });
+    $("btn-speak").addEventListener("click", () => { const p = S.activePlace; playVoice(p.id + "_d" + S.dlgIdx, p.dialogue[S.dlgIdx], p.npc.pitch, p.npc.rate); });
     $("btn-photo-speak").addEventListener("click", () => { const p = S.activePlace; speak(`진짜 ${p.name}이에요! 사진 속에서 ${p.lookMission.join(", ")}를 찾아봐요.`, p.npc.pitch, p.npc.rate); });
     $("btn-photo-back").addEventListener("click", () => { stopSpeak(); close("photo-overlay"); openQuest(S.activePlace); });
     $("btn-quest-done").addEventListener("click", finishPlace);
