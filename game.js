@@ -43,14 +43,15 @@
 
   // 각 건물 "입구 앞" 복귀 지점(비율). 진입 트리거 존(반경~140px) 밖 + 도로 위가 되도록 지정.
   // 나갈 때 원래 위치가 아니라 들어간 건물 입구 바로 앞으로 복귀 → 즉시 재진입(무한순환) 방지.
+  // 각 값은 해당 건물 "정면(도로 쪽)" 바로 앞. 위쪽 건물=아래로, 아래쪽 건물=위로, 바다=육지쪽.
   const WORLD_EXIT = {
-    school:     WL(0.43, 0.36),
-    library:    WL(0.66, 0.36),
-    playground: WL(0.60, 0.58),
-    market:     WL(0.30, 0.60),
-    mart:       WL(0.52, 0.60),
-    lake:       WL(0.66, 0.74),
-    beach:      WL(0.82, 0.52),
+    school:     WL(0.43, 0.36), // 학교(상단) 정면 아래 도로
+    library:    WL(0.69, 0.37), // 도서관(상단) 정면 아래
+    playground: WL(0.66, 0.61), // 놀이터(중앙) 아래
+    market:     WL(0.25, 0.56), // 시장(하단) 정면 위 도로
+    mart:       WL(0.52, 0.57), // 마트(하단) 정면 위 도로
+    lake:       WL(0.66, 0.70), // 청초호(하단) 육지쪽(좌상) 길
+    beach:      WL(0.80, 0.52), // 해변(우측) 육지쪽(왼쪽) 모래길
   };
 
   // 충돌 박스(이동 불가): 건물·물. 비율(cx,cy,w,h)→픽셀. 지도를 보고 footprint 추정.
@@ -320,15 +321,15 @@
         const zs = pt.zone || 130;
         const z = this.add.zone(pt.px, pt.py, zs, zs); this.physics.add.existing(z, true);
         z.portal = { to: pt.to, label: pt.label, spawn: null, back: false };
+        z.zoneHalf = zs / 2;
+        // 가장자리 트리거: 플레이어가 "밖→안"으로 들어올 때만 발동. 복귀 스폰이 존 안/근처라도
+        // 일단 한 번 밖으로 나가야 armed 되므로 즉시 재진입(무한순환)·끼임이 원천 차단됨.
+        z.armed = false;
         // 탭/클릭 진입: 건물 영역(존) + 이름표 둘 다 클릭 가능
         z.setInteractive(); z.on("pointerdown", () => this.tapPortal(z.portal));
         lbl.setInteractive({ useHandCursor: true }); lbl.on("pointerdown", () => this.tapPortal(z.portal));
         return z;
       });
-      this.portalArmed = !this.spawnOverride;
-      // 진입: 걸어서 자동(overlap) + 탭 둘 다. 복귀 스폰은 존 밖으로 빼서(placeDef fromWorld)
-      // 즉시 재진입(무한순환)을 막는다. portalArmed로 복귀 직후 400ms 잠금도 유지.
-      this.portals.forEach((z) => this.physics.add.overlap(this.player, z, () => this.tryPortal(z.portal)));
 
       // 카메라
       const cam = this.cameras.main;
@@ -399,16 +400,22 @@
           { fontFamily: "Galmuri11, sans-serif", fontSize: "13px", color: "#fff", backgroundColor: "#1b2a4a", padding: { x: 4, y: 2 } }).setOrigin(0.5, 1).setResolution(3).setDepth(99999);
         this.npcXY = { x: nx, y: ny };
 
-        // --- 동네로 돌아가는 문 (탭으로 나가기) ---
-        const dx = FX(ic.door.x), dy = FY(ic.door.y);
-        const doorIcon = this.add.text(dx, dy, "🚪", { fontSize: Math.round(Math.min(W, H) * 0.08) + "px" }).setOrigin(0.5).setDepth(99998);
-        this.add.text(dx, dy - Math.round(H * 0.06), "동네로 ▶",
-          { fontFamily: "Galmuri11, sans-serif", fontSize: "13px", color: "#fff", backgroundColor: "rgba(27,42,74,.95)", padding: { x: 6, y: 3 } }).setOrigin(0.5, 1).setResolution(3).setDepth(99999);
-        const dsz = Math.round(Math.min(W, H) * 0.16);
-        const dz = this.add.zone(dx, dy, dsz, dsz); dz.portal = def.portals[0];
-        this.portals = [dz];
-        // 탭 전용 나가기(걷기 오버랩 자동발동 제거 → 진입/퇴장 무한순환 방지).
-        doorIcon.setInteractive({ useHandCursor: true }); doorIcon.on("pointerdown", () => this.tapPortal(dz.portal));
+        // --- 동네로 돌아가는 문 (큰 탭 바 — 화면 상단 중앙, 조이스틱과 겹치지 않게) ---
+        const portal0 = def.portals[0];
+        // 상단 중앙에 크고 누르기 쉬운 "동네로" 버튼(스크롤 고정). 하단 조이스틱 회피.
+        const barY = Math.round(H * 0.06);
+        const bar = this.add.rectangle(W / 2, barY, Math.round(W * 0.5), Math.round(H * 0.07), 0x1b2a4a, 0.92)
+          .setStrokeStyle(3, 0xffffff, 0.9).setDepth(99998).setScrollFactor(0);
+        const barTxt = this.add.text(W / 2, barY, "🚪 동네로 나가기 ▶",
+          { fontFamily: "Galmuri11, sans-serif", fontSize: Math.round(Math.min(W, H) * 0.045) + "px", color: "#fff" })
+          .setOrigin(0.5).setDepth(99999).setScrollFactor(0).setResolution(3);
+        const exit = () => this.tapPortal(portal0);
+        bar.setInteractive({ useHandCursor: true }); bar.on("pointerdown", exit);
+        barTxt.setInteractive({ useHandCursor: true }); barTxt.on("pointerdown", exit);
+        // 키보드로도 나가기(Esc / Backspace)
+        this.input.keyboard.once("keydown-ESC", exit);
+        this.input.keyboard.once("keydown-BACKSPACE", exit);
+        this.portals = [];
 
         // --- 플레이어 (스폰 = 비율) ---
         const sp = FX(ic.spawn.x), spy = FY(ic.spawn.y);
@@ -458,7 +465,7 @@
     }
 
     tryPortal(pt) {
-      if (this.busy || !this.portalArmed || UI.isOpen) return;
+      if (this.busy || UI.isOpen) return; // 월드 진입은 update()의 밖→안 에지 트리거가 게이트
       this.busy = true;
       const cam = this.cameras.main;
       const fade = $("fade");
@@ -512,6 +519,17 @@
           this.npcTriggered = true;
           AUDIO.play("pop");
           UI.startExperience(this.def.npc);
+        }
+      }
+
+      // 월드 포탈: "밖→안" 에지 진입(걸어서 자동 진입). 복귀 스폰이 존 안/근처여도
+      // 일단 밖으로 나가야 armed → 즉시 재진입(무한순환) 방지.
+      if (this.def.image && this.portals && !this.busy && !UI.isOpen) {
+        for (const z of this.portals) {
+          if (!z || z.zoneHalf == null) continue;
+          const inside = Phaser.Math.Distance.Between(this.player.x, this.player.y, z.x, z.y) < z.zoneHalf;
+          if (!inside) { z.armed = true; }
+          else if (z.armed) { z.armed = false; this.tryPortal(z.portal); break; }
         }
       }
 
