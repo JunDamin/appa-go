@@ -316,9 +316,7 @@ window.UI = (function () {
   }
 
   /* ---------- 인트로 (이사 온 첫날 훅) ---------- */
-  // introShown=true 로 두면 시작 버튼이 인트로를 건너뛰고 바로 게임 시작.
-  // (인트로 사진 assets/intro/*.jpg 미비로 검은 화면 차단 → 임시 우회. 에셋 준비되면 false 로.)
-  let introShown = true, introIdx = 0;
+  let introShown = false, introIdx = 0;
   // 실제 속초 사진(친근감) + 사전생성 자연 음성
   const INTRO = [
     { photo: "town_view.jpg", text: "오늘 우리 가족은 새 동네, 속초로 이사 왔어요." },

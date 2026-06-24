@@ -174,6 +174,10 @@
     init(data) { this.mapId = data.mapId || "world"; this.spawnOverride = data.spawn; }
 
     create() {
+      // 씬 재시작(scene.restart) 시 같은 인스턴스가 재사용되므로, 이전 맵의 파괴된
+      // player/cursors/floorBounds 참조를 반드시 초기화한다. (내부맵은 비동기로 player를
+      // 만들기 때문에, 리셋하지 않으면 update()가 파괴된 스프라이트를 건드려 크래시→검은화면.)
+      this.player = null; this.cursors = null; this.floorBounds = null; this.npcXY = null; this.portals = [];
       const def = getDef(this.mapId);
       this.def = def;
       this.busy = false; this.npcTriggered = false;
@@ -366,17 +370,20 @@
         const nx = FX(ic.npc.x), ny = FY(ic.npc.y);
         const npcKey = "npc-" + def.npc.id;
         const spriteH = Math.round(H * 0.30); // 방 높이의 ~30%
-        let em;
+        let labelY = ny - spriteH - 6;
         if (this.textures.exists(npcKey)) {
-          em = this.add.image(nx, ny, npcKey).setOrigin(0.5, 1).setDepth(ny + 100); // 발이 ny
+          // 캐릭터 스프라이트(서 있는 사람) — 살짝 bob만. 떠다니는 이모지 폴백은 쓰지 않음.
+          const em = this.add.image(nx, ny, npcKey).setOrigin(0.5, 1).setDepth(ny + 100);
           const src = this.textures.get(npcKey).getSourceImage();
           em.setScale(spriteH / src.height);
+          this.tweens.add({ targets: em, y: ny - 4, duration: 900, yoyo: true, repeat: -1, ease: "Sine.inOut" });
         } else {
-          em = this.add.text(nx, ny, def.npc.npc.emoji, { fontSize: Math.round(Math.min(W, H) * 0.10) + "px" }).setOrigin(0.5, 1).setDepth(ny + 100);
+          // 스프라이트 없으면: 떠다니는 이모지 대신 바닥에 붙은 정적 표시(둥둥 안 뜨게).
+          const em = this.add.text(nx, ny, def.npc.npc.emoji, { fontSize: Math.round(Math.min(W, H) * 0.09) + "px" }).setOrigin(0.5, 1).setDepth(ny + 100);
+          labelY = ny - em.height - 6;
         }
-        this.add.text(nx, ny - spriteH - 6, def.npc.npc.name,
+        this.add.text(nx, labelY, def.npc.npc.name,
           { fontFamily: "Galmuri11, sans-serif", fontSize: "13px", color: "#fff", backgroundColor: "#1b2a4a", padding: { x: 4, y: 2 } }).setOrigin(0.5, 1).setResolution(3).setDepth(99999);
-        this.tweens.add({ targets: em, y: ny - 4, duration: 900, yoyo: true, repeat: -1, ease: "Sine.inOut" });
         this.npcXY = { x: nx, y: ny };
 
         // --- 동네로 돌아가는 문 ---
@@ -453,7 +460,7 @@
     }
 
     update() {
-      if (!this.player || !this.cursors) return; // 비동기 로드 중(내부맵) 가드
+      if (!this.player || !this.player.body || !this.cursors) return; // 비동기 로드/파괴된 스프라이트 가드
       const stop = UI.isOpen || this.busy;
       let vx = 0, vy = 0;
       if (!stop) {
