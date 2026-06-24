@@ -296,5 +296,15 @@ globalThis.CHARACTERS_DATA = (function () {
     pharmacy: ["어서 와, 괜찮아."],
   };
 
-  return { STAGES, CAST, AMBIENT, EASTER_EGGS, TOPICS, CROWD, WELCOME };
+  // 월드맵 생활 요소(배경 생동감): 하늘=나는 새(갈매기), 땅=자유 배회 동물(강아지·고양이).
+  // 토큰 PNG는 assets/characters/<id>_token.png (없으면 emoji 폴백).
+  const WILDLIFE = {
+    birds: { id: "amb_bird", emoji: "🐦", appearance: "a small cute seagull flying, side view, storybook", count: 3 },
+    roamers: [
+      { id: "amb_dog", emoji: "🐕", appearance: "a small fluffy dog walking, side view, storybook" },
+      { id: "amb_cat", emoji: "🐈", appearance: "a cute cat strolling, side view, storybook" },
+    ],
+  };
+
+  return { STAGES, CAST, AMBIENT, EASTER_EGGS, TOPICS, CROWD, WELCOME, WILDLIFE };
 })();

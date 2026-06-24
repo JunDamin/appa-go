@@ -19,6 +19,8 @@
 | `CHARACTERS.spawnCrowd(scene,{placeId,center,radius,onLead,height})` | game | **장소마다 여러 명**(lead 1 + extras N) 배치. `onLead(tok,id)`로 대표 인물 상호작용 연결. "사람 많은 동네" 느낌 |
 | `CHARACTERS.crowdFor(placeId)` | game | 군중 구성 {lead, extras[]} 조회 |
 | `CHARACTERS.welcomeCrowd(scene,crowd,placeId)` | game | **도착 환영** — 스폰된 군중이 인사 말풍선 + 통통 튀며 반겨줌. spawnCrowd 직후 호출 |
+| `CHARACTERS.spawnWorldLife(scene,{width,height,waypoints?})` | game | **월드맵 생활** — 나는 새(하늘) + 배회 강아지/고양이(땅) (+waypoints 주면 routine 사람도). 월드맵 진입 시 1회 |
+| `CHARACTERS.spawnBirds/spawnRoamers(scene,{width,height,count})` | game | 새/동물만 개별 스폰 |
 | `CHARACTERS.topics(id)` / `topicsForPlace(placeId)` | ui | **선택지 대화** [{q,a}] — 아이가 q를 버튼으로 고르면 a(속초 소개·생활 안내) 표시. 다 물어보면 `advanceImpression` 권장 |
 | `CHARACTERS.portrait(id,expr)` | ui | `{src,emoji}` 반환. `<img src>` 시도 후 onerror→emoji 폴백 |
 | `CHARACTERS.impressionLine(id)` / `advanceImpression(id)` | ui | 인상 단계 대사 / 단계 진행 |

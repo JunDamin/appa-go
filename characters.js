@@ -67,12 +67,14 @@ window.CHARACTERS = (function () {
       node = scene.add.text(x, y, emojiOf(id), { fontSize: Math.round(h * 0.7) + "px" }).setOrigin(0.5, 0.92);
     }
     node.setDepth(y);
-    const bob = scene.tweens.add({ targets: node, y: y - 3, duration: 680 + (x % 200), yoyo: true, repeat: -1, ease: "Sine.inOut" });
+    // 정지 토큰만 bob(위아래 흔들). 이동 토큰(walk/wander/roam)은 bob:false — y-트윈 충돌 방지.
+    const bob = opts.bob === false ? null
+      : scene.tweens.add({ targets: node, y: y - 3, duration: 680 + (x % 200), yoyo: true, repeat: -1, ease: "Sine.inOut" });
     return {
       node, shadow, baseY: y,
       setFlip(left) { if (node.setFlipX) node.setFlipX(!!left); },
-      moveTo(nx, ny) { node.x = nx; shadow.x = nx; node.setDepth(ny); shadow.setDepth(ny - 1); bob.updateTo("y", ny - 3, true); },
-      destroy() { bob.remove(); node.destroy(); shadow.destroy(); },
+      moveTo(nx, ny) { node.x = nx; shadow.x = nx; node.setDepth(ny); shadow.setDepth(ny - 1); if (bob) bob.updateTo("y", ny - 3, true); },
+      destroy() { if (bob) bob.remove(); node.destroy(); shadow.destroy(); },
     };
   }
 
@@ -101,7 +103,7 @@ window.CHARACTERS = (function () {
       const pts = route.map((k) => wp[k]).filter(Boolean);
       if (!pts.length) continue;
       const start = pts[0];
-      const tok = makeToken(scene, a.id, start.x, start.y, { height: opts.height || 30 });
+      const tok = makeToken(scene, a.id, start.x, start.y, { height: opts.height || 30, bob: false });
       if (a.flavor && tok.node.setInteractive) {
         tok.node.setInteractive({ useHandCursor: true });
         tok.node.on("pointerdown", () => showFlavor(scene, tok, a.flavor));
@@ -154,7 +156,7 @@ window.CHARACTERS = (function () {
     (crowd.extras || []).forEach((id, i) => {
       const ang = (Math.PI * 2 * (i + 1)) / ((crowd.extras.length) + 1);
       const ex = c.x + Math.cos(ang) * R, ey = c.y + Math.sin(ang) * R * 0.55;
-      const t = makeToken(scene, id, ex, ey, { height: opts.height || 30 });
+      const t = makeToken(scene, id, ex, ey, { height: opts.height || 30, bob: false });
       idleWander(scene, t, ex, ey, 14);
       const a = ambById[id];
       if (a && a.flavor && t.node.setInteractive) {
@@ -203,6 +205,77 @@ window.CHARACTERS = (function () {
     if (!tok || !tok.node) return;
     const sx = tok.node.scaleX, sy = tok.node.scaleY;
     scene.tweens.add({ targets: tok.node, scaleX: sx * 1.15, scaleY: sy * 1.15, duration: 150, yoyo: true, repeat: 1, ease: "Quad.out" });
+  }
+
+  /* ---------- 계약: 월드맵 생활 요소 ----------
+     날아다니는 새(하늘) + 자유 배회 동물(땅). game.js가 월드맵 진입 시 호출:
+       CHARACTERS.spawnWorldLife(scene, { width: W, height: H }); */
+  function spawnBirds(scene, opts) {
+    opts = opts || {};
+    const W = opts.width || 800, H = opts.height || 600;
+    const spec = (D.WILDLIFE && D.WILDLIFE.birds) || { id: "amb_bird", emoji: "🐦", count: 3 };
+    const n = opts.count || spec.count || 3;
+    const out = [];
+    for (let i = 0; i < n; i++) {
+      let node;
+      if (hasTexture(scene, spec.id)) { node = scene.add.image(0, 0, tokenKey(spec.id)); node.displayHeight = 18; node.scaleX = Math.abs(node.scaleY); }
+      else node = scene.add.text(0, 0, spec.emoji || "🐦", { fontSize: "16px" });
+      node.setOrigin(0.5).setDepth(900000); // 항상 건물 위(하늘)
+      flyAcross(scene, node, W, H, i);
+      out.push(node);
+    }
+    return out;
+  }
+  function flyAcross(scene, node, W, H, seed) {
+    if (!node || !node.scene) return;
+    const dir = Math.random() < 0.5 ? 1 : -1;
+    const y0 = 24 + Math.random() * H * 0.35;          // 화면 상단(하늘)
+    node.x = dir > 0 ? -24 : W + 24; node.y = y0;
+    if (node.setFlipX) node.setFlipX(dir < 0);
+    scene.tweens.add({
+      targets: node, x: dir > 0 ? W + 24 : -24, duration: 9000 + Math.random() * 7000, ease: "Linear",
+      onUpdate: () => { node.y = y0 + Math.sin((node.x + seed * 50) / 55) * 8; }, // 물결치듯 비행
+      onComplete: () => scene.time.delayedCall(400 + Math.random() * 3500, () => flyAcross(scene, node, W, H, seed)),
+    });
+  }
+  function spawnRoamers(scene, opts) {
+    opts = opts || {};
+    const W = opts.width || 800, H = opts.height || 600;
+    const list = (D.WILDLIFE && D.WILDLIFE.roamers) || [];
+    const n = opts.count != null ? opts.count : Math.min(2, list.length || 0);
+    const b = { minX: 40, maxX: W - 40, minY: H * 0.35, maxY: H - 40 };
+    const out = [];
+    for (let i = 0; i < n; i++) {
+      const r = list[i % Math.max(1, list.length)] || { id: "amb_dog" };
+      const x = b.minX + Math.random() * (b.maxX - b.minX), y = b.minY + Math.random() * (b.maxY - b.minY);
+      const tok = makeToken(scene, r.id, x, y, { height: opts.height || 22, bob: false });
+      freeRoam(scene, tok, b, opts.speed || 26);
+      out.push(tok);
+    }
+    return out;
+  }
+  function freeRoam(scene, tok, b, speed) {
+    const go = () => {
+      if (!tok.node || !tok.node.scene) return;
+      const nx = b.minX + Math.random() * (b.maxX - b.minX), ny = b.minY + Math.random() * (b.maxY - b.minY);
+      const d = Math.hypot(nx - tok.node.x, ny - tok.node.y) || 1;
+      tok.setFlip(nx < tok.node.x);
+      scene.tweens.add({
+        targets: tok.node, x: nx, y: ny, duration: (d / speed) * 1000, ease: "Sine.inOut",
+        onUpdate: () => { tok.shadow.x = tok.node.x; tok.shadow.y = tok.node.y + 10; tok.node.setDepth(tok.node.y); },
+        onComplete: () => scene.time.delayedCall(700 + Math.random() * 2200, go),
+      });
+    };
+    go();
+  }
+  // 한 번에: 나는 새 + 배회 동물 (+ 옵션으로 routine 사람)
+  function spawnWorldLife(scene, opts) {
+    opts = opts || {};
+    const birds = spawnBirds(scene, opts);
+    const roamers = spawnRoamers(scene, opts);
+    let people = [];
+    if (opts.waypoints) people = spawnAmbient(scene, opts);
+    return { birds, roamers, people };
   }
 
   /* ---------- 계약: 포트레이트 (ui.js DOM) ----------
@@ -269,6 +342,8 @@ window.CHARACTERS = (function () {
     preload, tokenKey, tokenPath, portrait, emojiOf,
     // 월드 토큰
     makeNPC, spawnAmbient, spawnCrowd, welcomeCrowd, welcomeLines,
+    // 월드맵 생활(새·동물)
+    spawnWorldLife, spawnBirds, spawnRoamers,
     // 선택지 대화
     topics, topicsForPlace, crowdFor,
     // 인상

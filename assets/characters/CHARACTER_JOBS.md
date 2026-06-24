@@ -48,6 +48,10 @@ const CHARACTER_JOBS = [
   { file: "assets/characters/amb_dogwalker_token.png", model: "gpt-image-2", prompt: `A Korean person walking a small fluffy dog. ${CHAR}. ${STORYBOOK}` },
   { file: "assets/characters/amb_bikekid_token.png",   model: "gpt-image-2", prompt: `A Korean kid riding a small bicycle. ${CHAR}. ${STORYBOOK}` },
   { file: "assets/characters/amb_keeper_token.png",    model: "gpt-image-2", prompt: `A Korean shopkeeper sweeping in front of a store. ${CHAR}. ${STORYBOOK}` },
+  // 월드맵 생활 요소 — 나는 새(하늘) + 배회 동물(땅)
+  { file: "assets/characters/amb_bird_token.png",      model: "gpt-image-2", prompt: `A small cute seagull flying, side view, wings spread. ${CHAR}. ${STORYBOOK}` },
+  { file: "assets/characters/amb_dog_token.png",       model: "gpt-image-2", prompt: `A small fluffy dog walking, side view. ${CHAR}. ${STORYBOOK}` },
+  { file: "assets/characters/amb_cat_token.png",       model: "gpt-image-2", prompt: `A cute cat strolling, side view. ${CHAR}. ${STORYBOOK}` },
 ];
 // generate(job, key): body.model = job.model || "gpt-image-1" 로 잡별 모델 적용.
 // 실행: node generate-assets.mjs characters
