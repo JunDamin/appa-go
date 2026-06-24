@@ -178,6 +178,7 @@ window.UI = (function () {
     S.collected[place.id] = place.piece;
     close("quest-overlay");
     renderPiecesHud(); showParentTip(place);
+    advanceQuestAfter(place); // 학교 완료 → 바다 미션 등 다음 아빠 미션
     const all = Object.keys(S.collected).length >= PLACES.length;
     S.isOpen = all; // 결과창이면 계속 열림
     if (all) { setTimeout(showResult, 600); }
@@ -250,19 +251,21 @@ window.UI = (function () {
 
   /* ---------- 메인 퀘스트: 제한시간 안에 OO 가서 만나기 ---------- */
   let questId = null;
-  function questTarget() { return PLACES.find((p) => p.id === "beach") || PLACES[PLACES.length - 1]; }
+  const QUEST_SEQ = ["school", "beach"]; // 아빠 미션 순서: 학교(정착) → 바다(주말)
   function ensureQuestBanner() {
     if ($("quest-banner")) return;
     const b = document.createElement("div"); b.id = "quest-banner"; b.className = "quest-banner";
     (document.getElementById("screen-map") || document.getElementById("app")).appendChild(b);
   }
   function fmt(ms) { const s = Math.max(0, Math.ceil(ms / 1000)); return Math.floor(s / 60) + ":" + String(s % 60).padStart(2, "0"); }
-  function startQuest() {
+  function startQuest() { S.questIdx = 0; beginQuest(); }
+  function beginQuest() {
     stopQuest();
-    const t = questTarget();
+    const t = PLACES.find((p) => p.id === QUEST_SEQ[S.questIdx]) || PLACES[PLACES.length - 1];
     S.quest = { id: t.id, name: t.name, npc: t.npc.name, t0: Date.now(), dur: 600000, done: false };
     ensureQuestBanner();
-    const b = $("quest-banner"); b.className = "quest-banner show";
+    $("quest-banner").className = "quest-banner show";
+    if (S.questIdx > 0) playVoice("mission2", "이제 바다에 가서 바다갈매기도 만나볼까?", 0.95, 0.92); // 자연 음성 2차 미션
     updateQuest(); questId = setInterval(updateQuest, 500);
   }
   function updateQuest() {
@@ -274,9 +277,17 @@ window.UI = (function () {
   }
   function questComplete() {
     const q = S.quest; if (!q || q.done) return; q.done = true; stopQuest();
-    const b = $("quest-banner"); if (b) { b.innerHTML = `🎉 ${q.npc}을(를) 만났어요! 퀘스트 성공!`; b.className = "quest-banner show done"; }
+    const b = $("quest-banner"); if (b) { b.innerHTML = `🎉 ${q.npc}을(를) 만났어요!`; b.className = "quest-banner show done"; }
     try { if (window.AUDIO) AUDIO.play("success"); } catch (e) {}
-    setTimeout(() => { const b2 = $("quest-banner"); if (b2) b2.classList.remove("show"); }, 4500);
+  }
+  // 장소 경험을 마치면 다음 아빠 미션으로 진행 (학교 → 바다)
+  function advanceQuestAfter(place) {
+    if (!S.quest || !S.quest.done || place.id !== S.quest.id) return;
+    if (S.questIdx < QUEST_SEQ.length - 1) { S.questIdx++; setTimeout(beginQuest, 800); }
+    else {
+      const b = $("quest-banner"); if (b) b.innerHTML = `🎉 아빠 미션 모두 완료! 멋져요!`;
+      setTimeout(() => { const b2 = $("quest-banner"); if (b2) b2.classList.remove("show"); }, 4500);
+    }
   }
   function questFail() {
     const q = S.quest; if (!q || q.done) return; q.done = true; stopQuest();
@@ -299,7 +310,7 @@ window.UI = (function () {
   const INTRO = [
     { photo: "town_view.jpg", text: "오늘 우리 가족은 새 동네, 속초로 이사 왔어요." },
     { photo: "street.jpg", text: "낯선 길, 낯선 학교, 낯선 가게들… 조금 떨리죠?" },
-    { photo: "sea.jpg", text: "걱정 마. 아빠가 첫 미션을 줄게 — 바다에 가서 바다갈매기랑 인사하고 오자! 10분이면 충분해." },
+    { photo: "school.jpg", text: "걱정 마. 아빠가 첫 미션을 줄게 — 새 학교에 가서 담임 선생님을 만나고 오자! 10분이면 충분해." },
   ];
   function renderIntro() {
     const it = INTRO[introIdx];
