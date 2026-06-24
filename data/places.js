@@ -31,8 +31,8 @@ globalThis.PLACES = [
       "어떤 표시를 기억하면 집에 돌아갈 때도 안심될까?",
       "넓은 운동장도 있고, 곧 새 친구도 사귈 거야."
     ],
-    photos: ["assets/photos/school_1.jpg"],
-    photoCredit: "ⓒ일러스트(개인정보 보호: 실제 학교 사진 대신)",
+    photos: ["assets/photos/school_1.jpg", "assets/photos/school_2.jpg"],
+    photoCredit: "ⓒ Wikimedia Commons / Jhcbs1019·Namoroka / CC BY-SA 4.0 (샘플 학교)",
     lookMission: ["교문", "운동장", "횡단보도", "국기 게양대"],
     choices: [
       { text: "교문 앞 길을 기억해요", result: "길 기억 카드를 얻었어요!" },
@@ -103,8 +103,8 @@ globalThis.PLACES = [
       "속초 시장에는 골목마다 맛있는 냄새가 숨어 있단다.",
       "여기 닭강정이 아주 바삭하고 유명해!"
     ],
-    photos: ["assets/photos/market_1.jpg"],
-    photoCredit: "ⓒ한국관광공사 포토코리아 / 게티이미지뱅크",
+    photos: ["assets/photos/market_1.jpg", "assets/photos/market_2.jpg"],
+    photoCredit: "ⓒ Wikimedia / Bernard Gagnon(CC0)·Christophe95(CC BY-SA 4.0) — 속초중앙·관광수산시장",
     lookMission: ["닭강정 가게", "간판", "시장 골목", "계산하는 곳"],
     choices: [
       { text: "닭강정 냄새를 맡아요", result: "간식 카드를 얻었어요!" },
@@ -151,8 +151,8 @@ globalThis.PLACES = [
       "여기는 청초호라는 큰 호수란다. 바다였다가 호수가 됐대.",
       "벤치에 앉아 새도 보고, 마음을 쉬어 가렴."
     ],
-    photos: ["assets/photos/lake_1.jpg"],
-    photoCredit: "ⓒWikimedia(CC) / 청초호 호수공원",
+    photos: ["assets/photos/lake_1.jpg", "assets/photos/lake_2.jpg"],
+    photoCredit: "ⓒ Wikimedia / BBA97(청초호)·Bernard Gagnon(아바이 갯배, CC0) / CC BY-SA 4.0",
     lookMission: ["벤치", "물", "산책길", "새"],
     choices: [
       { text: "산책길을 걸어요", result: "마음 쉬는 길 카드를 얻었어요!" },
@@ -175,8 +175,8 @@ globalThis.PLACES = [
       "바다는 매일 조금씩 다른 얼굴을 보여준대.",
       "백사장이 길어서 가족이 산책하기 좋아."
     ],
-    photos: ["assets/photos/beach_1.jpg"],
-    photoCredit: "ⓒ한국관광공사 포토코리아 / Wikimedia(CC)",
+    photos: ["assets/photos/beach_1.jpg", "assets/photos/beach_2.jpg"],
+    photoCredit: "ⓒ Wikimedia Commons / Mobius6 / CC BY-SA 4.0 — 속초해수욕장",
     lookMission: ["해변 입구", "모래사장", "산책로", "파도"],
     choices: [
       { text: "파도 소리를 들어요", result: "주말 기대 카드를 얻었어요!" },
