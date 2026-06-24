@@ -73,7 +73,8 @@
     // 트리거 존은 건물 충돌박스보다 확실히 커야 함 — 안 그러면 플레이어가 존에 닿으려면
     // 건물(solid) 안에 들어가야 해서 진입 불가(학교 등이 안 열리던 원인). 도로에서 트리거되게 넉넉히.
     const portals = PLACES.filter((p) => WORLD_LOC[p.id]).map((p) => {
-      const big = (p.id === "lake" || p.id === "beach") ? 300 : 280;
+      // 진입 존은 건물 바로 앞에서만 걸리게 좁게. (탭 진입 + 밖→안 에지 트리거라 작아도 됨)
+      const big = (p.id === "lake" || p.id === "beach") ? 150 : 110;
       return { px: WORLD_LOC[p.id].x, py: WORLD_LOC[p.id].y, to: "p_" + p.id, label: p.name, placeId: p.id, zone: big };
     });
     return {
