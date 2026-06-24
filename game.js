@@ -285,14 +285,14 @@
 
       // 우리 집 라벨
       if (def.home) this.add.text(def.home.x, def.home.y - 38, "우리 집 🏠",
-        { fontFamily: "Galmuri11, sans-serif", fontSize: "17px", color: "#fff", backgroundColor: "#7a55aa", padding: { x: 6, y: 3 } }).setOrigin(0.5, 1).setDepth(99999);
+        { fontFamily: "Galmuri11, sans-serif", fontSize: "18px", color: "#fff", backgroundColor: "#7a55aa", padding: { x: 6, y: 3 } }).setOrigin(0.5, 1).setResolution(3).setDepth(99999);
 
       // 장소 라벨 + 포탈존
       this.portals = (def.portals || []).map((pt) => {
         const done = UI.isCollected(pt.placeId);
         this.add.text(pt.px, pt.py - 44, (done ? "✓ " : "") + pt.label + " " + byId[pt.placeId].emoji,
-          { fontFamily: "Galmuri11, sans-serif", fontSize: "17px", color: "#fff", backgroundColor: done ? "#4ca77d" : "rgba(27,42,74,.92)", padding: { x: 6, y: 3 } })
-          .setOrigin(0.5, 1).setDepth(99999);
+          { fontFamily: "Galmuri11, sans-serif", fontSize: "18px", color: "#fff", backgroundColor: done ? "#4ca77d" : "rgba(27,42,74,.92)", padding: { x: 6, y: 3 } })
+          .setOrigin(0.5, 1).setResolution(3).setDepth(99999);
         const zs = pt.zone || 130;
         const z = this.add.zone(pt.px, pt.py, zs, zs); this.physics.add.existing(z, true);
         z.portal = { to: pt.to, label: pt.label, spawn: null, back: false }; return z;

@@ -138,6 +138,49 @@ window.CHARACTERS = (function () {
     scene.tweens.add({ targets: b, y: b.y - 6, alpha: 0, duration: 1600, ease: "Sine.inOut", onComplete: () => b.destroy() });
   }
 
+  /* ---------- 계약: 군중 스폰 (장소마다 여러 명) ----------
+     opts.placeId, opts.center={x,y}, opts.radius, opts.onLead(tok) (대표 인물 상호작용 연결).
+     lead = 상호작용 인물(makeToken), extras = 주변에 서성이는 사람들(가벼운 idle wander). */
+  function spawnCrowd(scene, opts) {
+    opts = opts || {};
+    const crowd = (D.CROWD || {})[opts.placeId];
+    if (!crowd) return [];
+    const c = opts.center || { x: 0, y: 0 };
+    const R = opts.radius || 42;
+    const out = [];
+    const lead = makeToken(scene, crowd.lead, c.x, c.y, { height: opts.height || 38 });
+    if (typeof opts.onLead === "function") opts.onLead(lead, crowd.lead);
+    out.push({ id: crowd.lead, tok: lead, lead: true });
+    (crowd.extras || []).forEach((id, i) => {
+      const ang = (Math.PI * 2 * (i + 1)) / ((crowd.extras.length) + 1);
+      const ex = c.x + Math.cos(ang) * R, ey = c.y + Math.sin(ang) * R * 0.55;
+      const t = makeToken(scene, id, ex, ey, { height: opts.height || 30 });
+      idleWander(scene, t, ex, ey, 14);
+      const a = ambById[id];
+      if (a && a.flavor && t.node.setInteractive) {
+        t.node.setInteractive({ useHandCursor: true });
+        t.node.on("pointerdown", () => showFlavor(scene, t, a.flavor));
+      }
+      out.push({ id, tok: t, lead: false });
+    });
+    return out;
+  }
+
+  // 제자리 근처에서 천천히 서성임(군중 생동감).
+  function idleWander(scene, tok, cx, cy, r) {
+    const hop = () => {
+      if (!tok.node || !tok.node.scene) return;
+      const nx = cx + (Math.random() * 2 - 1) * r, ny = cy + (Math.random() * 2 - 1) * r * 0.5;
+      tok.setFlip(nx < tok.node.x);
+      scene.tweens.add({
+        targets: tok.node, x: nx, y: ny, duration: 1100 + Math.random() * 900, ease: "Sine.inOut",
+        onUpdate: () => { tok.shadow.x = tok.node.x; tok.shadow.y = tok.node.y + 12; tok.node.setDepth(tok.node.y); },
+        onComplete: () => scene.time.delayedCall(600 + Math.random() * 1200, hop),
+      });
+    };
+    hop();
+  }
+
   /* ---------- 계약: 포트레이트 (ui.js DOM) ----------
      { src, emoji } 반환. ui.js 는 <img src> 로 시도하고 onerror 시 emoji 폴백. */
   function portrait(id, expr) {

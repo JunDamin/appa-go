@@ -21,7 +21,7 @@
 globalThis.PLACES = [
   {
     id: "school",
-    name: "우리 초등학교",
+    name: "조양초등학교",
     type: "school", theme: "school", dayPhase: "morning",
     emoji: "🏫", color: "#5a7fd0",
     world: { x: 18, y: 30 },
