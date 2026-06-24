@@ -41,6 +41,18 @@
   };
   const WORLD_HOME = WL(0.20, 0.22); // 좌상단 우리 집
 
+  // 각 건물 "입구 앞" 복귀 지점(비율). 진입 트리거 존(반경~140px) 밖 + 도로 위가 되도록 지정.
+  // 나갈 때 원래 위치가 아니라 들어간 건물 입구 바로 앞으로 복귀 → 즉시 재진입(무한순환) 방지.
+  const WORLD_EXIT = {
+    school:     WL(0.43, 0.36),
+    library:    WL(0.66, 0.36),
+    playground: WL(0.60, 0.58),
+    market:     WL(0.30, 0.60),
+    mart:       WL(0.52, 0.60),
+    lake:       WL(0.66, 0.74),
+    beach:      WL(0.82, 0.52),
+  };
+
   // 충돌 박스(이동 불가): 건물·물. 비율(cx,cy,w,h)→픽셀. 지도를 보고 footprint 추정.
   const SB = (cxf, cyf, wf, hf) => ({ x: Math.round((cxf - wf / 2) * WORLD_W), y: Math.round((cyf - hf / 2) * WORLD_H), w: Math.round(wf * WORLD_W), h: Math.round(hf * WORLD_H) });
   // 충돌 박스는 일러스트의 실제 건물 footprint에만 맞춰 타이트하게 — 주변 도로는 통행 가능해야 함.
@@ -74,7 +86,7 @@
     const ic = INTERIORS[place.id];
     if (ic) {
       const wl = WORLD_LOC[place.id] || WORLD_HOME;
-      const fromWorld = { x: wl.x, y: wl.y + 180 }; // 복귀 위치: 진입존(반경~140) 밖으로 빼 즉시 재진입 방지
+      const fromWorld = WORLD_EXIT[place.id] || { x: wl.x, y: wl.y + 180 }; // 건물 입구 앞 타일(없으면 폴백)
       const portals = [{ to: "world", spawn: fromWorld, back: true, label: "동네로" }];
       return { id: "p_" + place.id, name: place.name, interior: true, ic, npc: place, portals };
     }
@@ -99,7 +111,7 @@
 
     const spawn = { x: 9, y: 13 }, npcCell = { x: 9, y: 5 };
     const wl = WORLD_LOC[place.id] || WORLD_HOME;
-    const fromWorld = { x: wl.x, y: wl.y + 180 }; // 복귀 위치: 진입존 밖으로 빼 즉시 재진입 방지
+    const fromWorld = WORLD_EXIT[place.id] || { x: wl.x, y: wl.y + 180 }; // 건물 입구 앞 타일(없으면 폴백)
     const portals = [{ x: 9, y: rows - 1, to: "world", spawn: fromWorld, back: true, label: "동네로" }];
     return {
       id: "p_" + place.id, name: place.name, cols, rows, data, trees,
@@ -374,11 +386,10 @@
         const spriteH = Math.round(H * 0.30); // 방 높이의 ~30%
         let labelY = ny - spriteH - 6;
         if (this.textures.exists(npcKey)) {
-          // 캐릭터 스프라이트(서 있는 사람) — 살짝 bob만. 떠다니는 이모지 폴백은 쓰지 않음.
+          // 캐릭터 스프라이트(서 있는 사람) — 바닥 고정, 떠다니지 않음(플로팅 제거).
           const em = this.add.image(nx, ny, npcKey).setOrigin(0.5, 1).setDepth(ny + 100);
           const src = this.textures.get(npcKey).getSourceImage();
           em.setScale(spriteH / src.height);
-          this.tweens.add({ targets: em, y: ny - 4, duration: 900, yoyo: true, repeat: -1, ease: "Sine.inOut" });
         } else {
           // 스프라이트 없으면: 떠다니는 이모지 대신 바닥에 붙은 정적 표시(둥둥 안 뜨게).
           const em = this.add.text(nx, ny, def.npc.npc.emoji, { fontSize: Math.round(Math.min(W, H) * 0.09) + "px" }).setOrigin(0.5, 1).setDepth(ny + 100);
