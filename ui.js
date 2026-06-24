@@ -371,3 +371,5 @@ window.UI = (function () {
     isCollected: (id) => !!S.collected[id],
     collectedCount: () => Object.keys(S.collected).length,
     speak, stopSpeak,
+  };
+})();
