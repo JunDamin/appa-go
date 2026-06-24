@@ -79,6 +79,29 @@ git branch --show-current
   - OpenAI TTS: `https://api.openai.com/v1/audio/speech` (예: model `gpt-4o-mini-tts`) → mp3.
 - **worktree마다 `.env`가 따로 필요**하다(추적되지 않으므로 worktree에 복사되지 않음). 키 없으면 생성 스크립트가 즉시 종료된다(`generate-assets.mjs:69` 패턴).
 
+## 5.1 통합·테스트 세션 책임 (루트 `main` = integrator)
+
+루트(`main`) 세션이 **통합과 테스트를 전담**한다. 작업 세션은 자기 모듈만, 통합 세션은 합치고 검증한다.
+
+**머지 게이트 (반드시 순서대로):**
+1. `git merge session/<X>` — 한 번에 하나만.
+2. 즉시 **스모크 테스트**(§5.2) 실행.
+3. 통과 → 다음 브랜치 머지. 실패 → 머지 되돌리고(`git reset --hard ORIG_HEAD` 또는 `git merge --abort`) 담당 세션에 콘솔 로그와 함께 보고. **깨진 채로 다음 머지 금지.**
+4. 모든 머지·테스트 통과 시 체크포인트 태그: `git tag green-<날짜>`.
+
+### 5.2 스모크 테스트 절차 (Playwright MCP)
+
+> **공유 자원 규칙 (실측으로 확인된 충돌):**
+> - **포트**: `node server.mjs`의 5500은 1개 세션만 점유 가능(`EADDRINUSE`). 미리보기가 필요한 세션은 `$env:PORT=5501; node server.mjs` 식으로 **세션마다 다른 포트** 사용. 브라우저 스모크 테스트는 **통합 세션이 전담**한다.
+> - **Playwright 브라우저**: MCP 브라우저 인스턴스는 전역 1개라 여러 세션이 동시에 쓰면 페이지가 닫힌다(`Target page has been closed`). **브라우저 테스트는 통합 세션만** 실행한다. 작업 세션은 브라우저 자동화를 쓰지 않는다.
+
+1. 서버 기동: `node server.mjs` → http://localhost:5500 (background).
+2. `browser_navigate` http://localhost:5500 → `browser_wait_for` 캔버스 렌더.
+3. **콘솔 에러 0건**: `browser_console_messages` 에 error 레벨 없어야 함 (기존 `.playwright-mcp/console-*.log` 패턴).
+4. **전역 계약 존재**: `browser_evaluate` 로 `!!window.AUDIO && !!window.UI && !!window.GAMEINPUT` === true.
+5. **기본 동작**: 게임 씬 로드 확인(Phaser canvas), 조이스틱 입력 1회 → 캐릭터 반응, `window.UI` 말풍선/음성 1회 동작.
+6. 결과를 `green` / `red(사유+로그)` 로 사용자에게 한 줄 보고.
+
 ## 6. 충돌·사고 시 행동
 
 - 머지 충돌: 보고 후 통합 세션이 해소. 필요 시 `git revert` / `git reset`으로 초기 스냅샷까지 롤백 가능.
