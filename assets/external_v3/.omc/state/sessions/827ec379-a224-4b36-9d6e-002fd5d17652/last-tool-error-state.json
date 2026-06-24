@@ -1,0 +1,7 @@
+{
+  "tool_name": "Bash",
+  "tool_input_preview": "{\"command\":\"cd \\\"C:\\\\Users\\\\user\\\\Documents\\\\appa_go\\\\assets\\\\external_v3\\\"\\nS=\\\"C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\C--Users-user-Documents-appa-go\\\\827ec379-a224-4b36-9d6e-002fd5d17652\\\\s...",
+  "error": "Exit code 1\n[eval]:2\r\nconst data=require(\"C:\\Users\\user\\AppData\\Local\\Temp\\claude\\C--Users-user-Documents-appa-go\\827ec379-a224-4b36-9d6e-002fd5d17652\\scratchpad/tiles.json\".replace(/\\\\/g,\"/\"));\r\n                            ^^^^^^\r\nExpected unicode escape\r\n\r\nSyntaxError: Invalid Unicode escape sequence\r\n    at makeContextifyScript (node:internal/vm:194:14)\r\n    at compileScript (node:internal/process/execution:388:10)\r\n    at evalTypeScript (node:internal/process/execution:260:22)\r\n    at node:i...",
+  "timestamp": "2026-06-24T02:15:55.376Z",
+  "retry_count": 1
+}

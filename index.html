@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>아빠, Go! — 속초 탐험</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧭</text></svg>" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/galmuri@latest/dist/galmuri.css" />
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div id="app">
+
+    <!-- ===== 시작 화면 ===== -->
+    <section id="screen-start" class="screen active">
+      <div class="cover-stars"></div>
+      <div class="start-inner">
+        <img src="assets/logo.png" alt="아빠 Go!" class="cover-logo" />
+        <p class="subtitle">속초로 떠나는 탐험</p>
+        <button id="btn-start" class="big-btn cover-btn">▶ 모험 시작</button>
+        <p class="hint">5~9세 · 부모님과 함께 보고 들어요</p>
+        <p class="hint">📱 터치 · 💻 방향키/WASD 이동, Enter 진행</p>
+      </div>
+    </section>
+
+    <!-- ===== 맵 화면 ===== -->
+    <section id="screen-map" class="screen">
+      <header class="hud">
+        <button id="btn-home" class="icon-btn" title="처음으로">🏠</button>
+        <div id="hud-title" class="hud-title">속초 마을</div>
+        <div id="pieces-hud" class="pieces-hud" title="모은 보물 조각"></div>
+      </header>
+
+      <div class="map-wrap">
+        <div id="game-root" class="game-root"></div>
+        <div id="joystick" class="joystick">
+          <div id="joy-base" class="joy-base"><div id="joy-thumb" class="joy-thumb"></div></div>
+        </div>
+        <div id="near-hint" class="near-hint"></div>
+      </div>
+    </section>
+
+    <!-- ===== 대사창 (오버레이) ===== -->
+    <div id="dialogue-overlay" class="overlay">
+      <div class="dialogue-scene">
+        <div class="place-banner"><span id="d-place-emoji"></span> <span id="d-place-name"></span></div>
+        <div class="npc-stage">
+          <canvas id="d-npc-avatar" class="npc-avatar" width="96" height="96"></canvas>
+        </div>
+        <div class="dialogue-box">
+          <div class="speaker-tag"><span id="d-speaker">NPC</span></div>
+          <p id="d-text" class="dialogue-text">...</p>
+          <div class="dialogue-actions">
+            <button id="btn-speak" class="mini-btn">🔊 목소리로 듣기</button>
+            <button id="btn-next" class="mini-btn primary">다음 ▶</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 사진 보기 (오버레이) ===== -->
+    <div id="photo-overlay" class="overlay">
+      <div class="photo-scene">
+        <div class="photo-title">진짜 <span id="p-place-name"></span>이에요!</div>
+        <div id="photo-frame" class="photo-frame"></div>
+        <div id="photo-credit" class="photo-credit"></div>
+        <div class="mission-block">
+          <div class="mission-head">📷 사진 속에서 찾아봐요</div>
+          <ul id="mission-list" class="mission-list"></ul>
+        </div>
+        <div class="photo-actions">
+          <button id="btn-photo-speak" class="mini-btn">🔊 목소리로 듣기</button>
+          <button id="btn-photo-back" class="mini-btn primary">게임으로 돌아가기 ▶</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 선택지 / 보상 (오버레이) ===== -->
+    <div id="quest-overlay" class="overlay">
+      <div class="quest-scene">
+        <div class="quest-head">무엇을 해볼까요?</div>
+        <div id="quest-choices" class="quest-choices"></div>
+        <div id="quest-result" class="quest-result"></div>
+        <button id="btn-quest-done" class="big-btn hidden">좋아요! ▶</button>
+      </div>
+    </div>
+
+    <!-- ===== 결과 / 보물지도 (오버레이) ===== -->
+    <div id="result-overlay" class="overlay">
+      <div class="result-scene">
+        <div class="result-emoji">🗺️✨</div>
+        <h2 class="result-title">보물지도 완성!</h2>
+        <p class="result-sub">속초의 보물 조각을 모두 모았어요!</p>
+        <div id="result-pieces" class="result-pieces"></div>
+        <p class="result-msg">이제 속초가 조금 친근해졌나요?<br/>다음엔 진짜로 함께 가봐요!</p>
+        <button id="btn-replay" class="big-btn">다시 탐험하기 🔄</button>
+      </div>
+    </div>
+
+    <!-- 부모 팁 토스트 -->
+    <div id="parent-tip" class="parent-tip"></div>
+
+    <!-- 맵 전환 페이드 -->
+    <div id="fade" class="fade"></div>
+
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.80.1/dist/phaser.min.js"></script>
+  <script src="data/places.js"></script>
+  <script src="audio.js"></script>
+  <script src="ui.js"></script>
+  <script src="game.js"></script>
+</body>
+</html>

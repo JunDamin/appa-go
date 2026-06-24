@@ -1,0 +1,22 @@
+{
+  "version": 1,
+  "entries": {
+    "79a93d4a2f8f50b95f852280616242fee1855dc99a3c75211917f55e72e95fae": {
+      "last_emitted_at_ms": 1782265899556,
+      "message": "Use parallel execution for independent tasks. Use run_in_background for long operations (npm install, builds, tests)."
+    },
+    "445ed27a3872b681d98190bae61ccb84954e1bc4e140df5370be958dee776b3a": {
+      "last_emitted_at_ms": 1782265741553,
+      "message": "Verify changes work after editing. Test functionality before marking complete."
+    },
+    "466399dafa2d20f60587180bad0a07358eb7f2bce724df0ff682f038ad33f5ad": {
+      "last_emitted_at_ms": 1782265641689,
+      "message": "Read multiple files in parallel when possible for faster analysis."
+    },
+    "bc224299a4740281c8df3c5c99f2683c564707820943bc1e398e2f698b46833c": {
+      "last_emitted_at_ms": 1782265584370,
+      "message": "Spawning agent: general-purpose (inherit) | Task: Source 32px top-down RPG town assets"
+    }
+  },
+  "updated_at": "2026-06-24T01:51:39.556Z"
+}

@@ -1,0 +1,7 @@
+.env
+node_modules/
+.DS_Store
+
+# 런타임/세션 산출물 (멀티 세션)
+.playwright-mcp/
+.omc/state/
