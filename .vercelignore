@@ -1,0 +1,23 @@
+# 보안: API 키는 런타임 미사용 — 절대 배포 금지
+.env
+.env.*
+
+# 개발/세션 산출물 (런타임 불필요)
+.git
+.omc
+.playwright-mcp
+node_modules
+
+# 빌드타임 전용 스크립트(키 사용 — 배포 제외)
+server.mjs
+generate-assets.mjs
+generate-extras.mjs
+build-map.mjs
+
+# 에셋 원본/임시 (런타임 미사용 — 용량 절감)
+samples
+assets/external/_tmp
+assets/external_v2/_downloads
+assets/external_v2/_tmp
+assets/external_v3/_downloads
+assets/external_v3/photos

@@ -355,12 +355,21 @@
             .setOrigin(0.5).setDepth(2);
         }
 
-        // --- NPC ---
+        // --- NPC (실제 캐릭터 스프라이트, 없으면 이모지 폴백) ---
         const nx = FX(ic.npc.x), ny = FY(ic.npc.y);
-        const em = this.add.text(nx, ny, def.npc.npc.emoji, { fontSize: Math.round(Math.min(W, H) * 0.08) + "px" }).setOrigin(0.5).setDepth(ny + 100);
-        this.add.text(nx, ny - Math.round(H * 0.06), def.npc.npc.name,
-          { fontFamily: "Galmuri11, sans-serif", fontSize: "12px", color: "#fff", backgroundColor: "#1b2a4a", padding: { x: 4, y: 2 } }).setOrigin(0.5, 1).setDepth(99999);
-        this.tweens.add({ targets: em, y: ny - 4, duration: 700, yoyo: true, repeat: -1, ease: "Sine.inOut" });
+        const npcKey = "npc-" + def.npc.id;
+        const spriteH = Math.round(H * 0.30); // 방 높이의 ~30%
+        let em;
+        if (this.textures.exists(npcKey)) {
+          em = this.add.image(nx, ny, npcKey).setOrigin(0.5, 1).setDepth(ny + 100); // 발이 ny
+          const src = this.textures.get(npcKey).getSourceImage();
+          em.setScale(spriteH / src.height);
+        } else {
+          em = this.add.text(nx, ny, def.npc.npc.emoji, { fontSize: Math.round(Math.min(W, H) * 0.10) + "px" }).setOrigin(0.5, 1).setDepth(ny + 100);
+        }
+        this.add.text(nx, ny - spriteH - 6, def.npc.npc.name,
+          { fontFamily: "Galmuri11, sans-serif", fontSize: "13px", color: "#fff", backgroundColor: "#1b2a4a", padding: { x: 4, y: 2 } }).setOrigin(0.5, 1).setResolution(3).setDepth(99999);
+        this.tweens.add({ targets: em, y: ny - 4, duration: 900, yoyo: true, repeat: -1, ease: "Sine.inOut" });
         this.npcXY = { x: nx, y: ny };
 
         // --- 동네로 돌아가는 문 ---

@@ -50,13 +50,24 @@ window.UI = (function () {
   function open(id) { S.isOpen = true; $(id).classList.add("active"); }
   function close(id) { $(id).classList.remove("active"); $(id).querySelectorAll(".photo-dots").forEach((d) => d.remove()); }
 
+  // 대화창 아바타 = 실제 얼굴 PNG(assets/avatars/<key>.png), 없으면 이모지 폴백.
+  const AVATAR_KEY = { library: "librarian", playground: "friend", market: "market_lady", lake: "grandpa", beach: "seagull", school: "librarian", mart: "dad" };
   function drawAvatar(place) {
     const cv = $("d-npc-avatar"); if (!cv || !cv.getContext) return;
     const g = cv.getContext("2d");
-    g.clearRect(0, 0, cv.width, cv.height);
-    g.fillStyle = "#fff8e6"; g.fillRect(0, 0, cv.width, cv.height);
-    g.font = "60px serif"; g.textAlign = "center"; g.textBaseline = "middle";
-    g.fillText(place.npc.emoji || place.emoji, cv.width / 2, cv.height / 2 + 4);
+    const paintEmoji = () => {
+      g.clearRect(0, 0, cv.width, cv.height);
+      g.fillStyle = "#fff8e6"; g.fillRect(0, 0, cv.width, cv.height);
+      g.font = "60px serif"; g.textAlign = "center"; g.textBaseline = "middle";
+      g.fillText(place.npc.emoji || place.emoji, cv.width / 2, cv.height / 2 + 4);
+    };
+    const key = AVATAR_KEY[place.id];
+    if (!key) { paintEmoji(); return; }
+    const img = new Image();
+    img.onload = () => { g.clearRect(0, 0, cv.width, cv.height); g.fillStyle = "#fff8e6"; g.fillRect(0, 0, cv.width, cv.height); g.drawImage(img, 0, 0, cv.width, cv.height); };
+    img.onerror = paintEmoji;
+    img.src = "assets/avatars/" + key + ".png";
+    paintEmoji(); // 로드 전 즉시 폴백 표시(로드되면 덮어씀)
   }
 
   /* ---------- 흐름 ---------- */
