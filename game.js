@@ -294,15 +294,19 @@
       if (def.home) this.add.text(def.home.x, def.home.y - 38, "우리 집 🏠",
         { fontFamily: "Galmuri11, sans-serif", fontSize: "18px", color: "#fff", backgroundColor: "#7a55aa", padding: { x: 6, y: 3 } }).setOrigin(0.5, 1).setResolution(3).setDepth(99999);
 
-      // 장소 라벨 + 포탈존
+      // 장소 라벨 + 포탈존 — 걸어서 진입 + 탭(클릭)하면 바로 진입(정확한 이동 불필요).
       this.portals = (def.portals || []).map((pt) => {
         const done = UI.isCollected(pt.placeId);
-        this.add.text(pt.px, pt.py - 44, (done ? "✓ " : "") + pt.label + " " + byId[pt.placeId].emoji,
+        const lbl = this.add.text(pt.px, pt.py - 44, (done ? "✓ " : "") + pt.label + " " + byId[pt.placeId].emoji,
           { fontFamily: "Galmuri11, sans-serif", fontSize: "18px", color: "#fff", backgroundColor: done ? "#4ca77d" : "rgba(27,42,74,.92)", padding: { x: 6, y: 3 } })
           .setOrigin(0.5, 1).setResolution(3).setDepth(99999);
         const zs = pt.zone || 130;
         const z = this.add.zone(pt.px, pt.py, zs, zs); this.physics.add.existing(z, true);
-        z.portal = { to: pt.to, label: pt.label, spawn: null, back: false }; return z;
+        z.portal = { to: pt.to, label: pt.label, spawn: null, back: false };
+        // 탭/클릭 진입: 건물 영역(존) + 이름표 둘 다 클릭 가능
+        z.setInteractive(); z.on("pointerdown", () => this.tapPortal(z.portal));
+        lbl.setInteractive({ useHandCursor: true }); lbl.on("pointerdown", () => this.tapPortal(z.portal));
+        return z;
       });
       this.portalArmed = !this.spawnOverride;
       this.portals.forEach((z) => this.physics.add.overlap(this.player, z, () => this.tryPortal(z.portal)));
