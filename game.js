@@ -12,7 +12,7 @@
   const INTERIORS = globalThis.INTERIORS || {};
   // 내부 NPC = 실제 캐릭터 스프라이트(투명 standee, assets/characters/<key>.png). 이모지 폴백.
   // school/mart는 전용 에셋이 없어 가까운 인물 재사용(담임=librarian, 마트=dad). 추후 전용 생성 가능.
-  const NPC_SPRITE = { library: "librarian", playground: "friend", market: "market_lady", lake: "grandpa", beach: "seagull", school: "librarian", mart: "dad" };
+  const NPC_SPRITE = { library: "librarian", playground: "friend", market: "market_aunt", lake: "grandpa", beach: "gull", school: "teacher", mart: "mart_keeper", daycare: "daycare_teacher" };
 
   const TS = 32;          // LPC 타일 크기
   const ZOOM = 2.2;       // 카메라 줌
@@ -142,7 +142,8 @@
       this.load.image("worldmap", "assets/world/sokcho_map.png");
       // 건물 내부 = 이미지 백드롭(데이터 INTERIORS) 온디맨드 로드. 타일 조립 폐기로 urban 시트 불필요.
       // 내부 NPC 캐릭터 standee (장소별). 누락 시 createInterior가 이모지로 폴백.
-      Object.entries(NPC_SPRITE).forEach(([id, key]) => this.load.image("npc-" + id, "assets/characters/" + key + ".png"));
+      Object.entries(NPC_SPRITE).forEach(([id, key]) => this.load.image("npc-" + id, "assets/characters/" + key + "_token.png"));
+      if (window.CHARACTERS && CHARACTERS.preload) CHARACTERS.preload(this); // 캐릭터 토큰 일괄 로드(누락은 무시)
     }
     create() {
       // LPC 지형 PNG의 중앙 채움 타일(인덱스4)을 모아 합성 tileset 생성
@@ -321,6 +322,8 @@
       this.cursors = this.input.keyboard.createCursorKeys();
       this.wasd = this.input.keyboard.addKeys({ w: "W", a: "A", s: "S", d: "D" });
       this.events.on("update", () => { if (this.player) this.player.setDepth(this.player.y); });
+      // 월드맵 생활: 나는 새 + 배회 강아지/고양이 (characters 세션)
+      if (window.CHARACTERS && CHARACTERS.spawnWorldLife) CHARACTERS.spawnWorldLife(this, { width: W, height: H });
       this.time.delayedCall(400, () => { this.portalArmed = true; });
     }
 
@@ -419,6 +422,20 @@
       this.load.once("loaderror", done); // 이미지 없으면 플레이스홀더로
       this.load.image(texKey, ic.bg);
       this.load.start();
+    }
+
+    // 탭/클릭 진입: 정확한 이동 없이 바로 진입(아이용). portalArmed 무시, 올바른 카드 표시.
+    tapPortal(pt) {
+      if (this.busy || UI.isOpen) return;
+      this.busy = true;
+      const cam = this.cameras.main; const fade = $("fade");
+      fade.innerHTML = `<div class="map-card">${pt.back ? "🏘️ 속초 월드맵" : "📍 " + pt.label}</div>`;
+      fade.classList.add("show");
+      cam.fadeOut(260);
+      this.time.delayedCall(300, () => {
+        this.scene.restart({ mapId: pt.to, spawn: pt.spawn || null });
+        setTimeout(() => fade.classList.remove("show"), 320);
+      });
     }
 
     tryPortal(pt) {
